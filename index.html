@@ -308,6 +308,7 @@ function pd(){pin=pin.slice(0,-1);upd();document.getElementById('pin-error').tex
 function upd(s){for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.className='pin-dot';if(s)d.classList.add(s);else if(i<pin.length)d.classList.add('filled');}}
 function chk(){if(pin===PIN){sessionStorage.setItem(PSK,'1');document.getElementById('pin-screen').classList.add('hidden');init();}else{upd('error');document.getElementById('pin-error').textContent='Wrong PIN — try again';setTimeout(()=>{pin='';upd();document.getElementById('pin-error').textContent='';},1000);}}
 function sync(s){document.getElementById('sync-dot').className='sync-dot'+(s==='syncing'?' syncing':s==='error'?' error':'');const st=document.getElementById('sync-time');if(s==='ok'){st.textContent=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}else if(s==='error'){st.textContent='Offline';}else{st.textContent='';}}
+
 async function init(){
   document.getElementById('loading').classList.remove('hidden');sync('syncing');
   try{
@@ -450,6 +451,34 @@ async function removeCow(tag,btn){
   pendingRemoveTimer=setTimeout(()=>{pendingRemove=null;rcd(tag);},4000);
 }
 function populateTaglist(){const dl=document.getElementById('cow-tags');if(dl)dl.innerHTML=cows.map(c=>'<option value="'+c.tag+'">').join('');}
+let editEvt=null,editSex=null;
+function openEditSheet(id,tag){
+  editEvt=events.find(e=>e.id===id);if(!editEvt)return;
+  editSex=editEvt.sex;
+  document.getElementById('edit-sheet-title').textContent='Edit \u2014 Cow '+tag;
+  document.getElementById('ed-date').value=editEvt.date||'';
+  document.getElementById('ed-notes').value=editEvt.notes||'';
+  ['b','h','t','d'].forEach(i=>document.getElementById('ebt-'+i).className='bt');
+  const m={B:'b',H:'h',Twins:'t',Died:'d'};if(editSex&&m[editSex])document.getElementById('ebt-'+m[editSex]).classList.add('s'+m[editSex]);
+  document.getElementById('edit-sheet').classList.add('open');
+}
+function closeEditSheet(){document.getElementById('edit-sheet').classList.remove('open');editEvt=null;editSex=null;}
+function maybeCloseEdit(e){if(e.target===e.currentTarget)closeEditSheet();}
+function ess(s){editSex=s;['b','h','t','d'].forEach(i=>document.getElementById('ebt-'+i).className='bt');const m={B:'b',H:'h',Twins:'t',Died:'d'};if(m[s])document.getElementById('ebt-'+m[s]).classList.add('s'+m[s]);}
+async function saveEdit(){
+  if(!editEvt)return;
+  const date=document.getElementById('ed-date').value,notes=document.getElementById('ed-notes').value.trim();
+  const btn=document.getElementById('edit-sub-btn');btn.disabled=true;btn.textContent='Saving\u2026';
+  try{
+    const upd={sex:editSex,date:date||null,notes:notes||null,outcome:editSex==='Died'?'Died':(editSex?'Alive':null)};
+    await db('events?id=eq.'+editEvt.id,'PATCH',upd);
+    const idx=events.findIndex(e=>e.id===editEvt.id);
+    if(idx>=0)events[idx]={...events[idx],...upd};
+    const tag=String(editEvt.cow_tag||editEvt.cowTag);
+    closeEditSheet();toast('\u2713 Updated \u2014 Cow '+tag);rcd(tag);
+  }catch(e){toast('Could not save \u2014 check connection',true);}
+  btn.disabled=false;btn.textContent='Save Changes \u2192';
+}
 let editEvt=null,editSex=null;
 function openEditSheet(id,tag){
   editEvt=events.find(e=>e.id===id);if(!editEvt)return;
