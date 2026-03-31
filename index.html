@@ -111,6 +111,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--cream);color:var(--ink);d
 .tl-body.de .tl-calf{color:var(--red)}
 .add-yr-btn{width:100%;padding:14px;background:none;border:2px dashed var(--border);border-radius:12px;color:var(--muted);font-family:"DM Sans",sans-serif;font-size:0.95rem;cursor:pointer;transition:all 0.15s;margin-top:4px}
 .add-yr-btn:active{border-color:var(--pink);color:var(--pink);background:var(--pink-l)}
+.tl-delete{position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(28,18,8,0.2);font-size:0.9rem;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all 0.15s}
+.tl-delete:active{color:var(--red);background:var(--red-l)}
+.tl-body{position:relative}
+.remove-cow-btn{display:block;width:calc(100% - 32px);margin:0 16px 20px;padding:12px;background:none;border:1.5px solid var(--red);border-radius:12px;color:var(--red);font-family:"DM Sans",sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s}
+.remove-cow-btn:active{background:var(--red-l)}
 .season-card{background:white;border-radius:14px;margin:8px 12px;padding:16px;box-shadow:0 1px 8px rgba(28,18,8,0.06)}
 .sy{font-family:"Playfair Display",serif;font-size:1.2rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
 .sy-num{color:var(--ink)}
@@ -343,9 +348,11 @@ function rcd(tag){
     const e=events.find(ev=>ev.cowTag===tag&&ev.year===yr);
     if(!e&&yr!==2025)return;
     const died=e?.outcome==='Died'||e?.sex==='Died';
-    html+='<div class="tl-item"><div class="tl-dot '+(!e?'noc':died?'die':'cal')+'">'+(!e?'&#9675;':died?'&#10013;':se(e?.sex))+'</div><div class="tl-body '+(died?'de':'')+'"><div class="tl-yr">'+yr+(yr===2025?' &middot; Current Season':'')+'</div><div class="tl-calf">'+(!e?'No record yet':died?'Calf Lost':sl(e.sex)+' Calf')+'</div>'+(!e&&yr===2025?'<div class="tl-detail">Waiting to calve</div>':e?.date?'<div class="tl-detail">'+fd(e.date)+'</div>':'')+(e?.notes?'<div class="tl-note">&ldquo;'+e.notes+'&rdquo;</div>':'')+'</div></div>';
+    const delBtn=e?'<button class="tl-delete" onclick="delEvent(\''+e.id+'\',\''+tag+'\')">&#10005;</button>':'';
+    html+='<div class="tl-item"><div class="tl-dot '+(!e?'noc':died?'die':'cal')+'">'+(!e?'&#9675;':died?'&#10013;':se(e?.sex))+'</div><div class="tl-body '+(died?'de':'')+'">'+delBtn+'<div class="tl-yr">'+yr+(yr===2025?' &middot; Current Season':'')+'</div><div class="tl-calf">'+(!e?'No record yet':died?'Calf Lost':sl(e.sex)+' Calf')+'</div>'+(!e&&yr===2025?'<div class="tl-detail">Waiting to calve</div>':e?.date?'<div class="tl-detail">'+fd(e.date)+'</div>':'')+(e?.notes?'<div class="tl-note">&ldquo;'+e.notes+'&rdquo;</div>':'')+'</div></div>';
   });
   if(!events.find(e=>e.cowTag===tag&&e.year===2025))html+='<button class="add-yr-btn" onclick="prefill(\''+tag+'\')">+ Record 2025 calf for Cow '+tag+'</button>';
+  html+='<button class="remove-cow-btn" onclick="removeCow(\''+tag+'\')">Remove Cow '+tag+' from Herd</button>';
   document.getElementById('ctl').innerHTML=html;
 }
 function prefill(tag){document.getElementById('f-tag').value=tag;sv('add',document.querySelector('.nav-tab:nth-child(3)'));}
@@ -381,10 +388,30 @@ async function addCow(){
   if(cows.find(c=>c.tag===tag)){toast('Cow '+tag+' already in herd',true);return;}
   try{const c={id:'c'+Date.now(),tag,herd:'Pink',added_year:2025,notes:document.getElementById('new-notes').value.trim()||null};await db('cows','POST',[c]);cows.push(c);document.getElementById('new-tag').value='';document.getElementById('new-notes').value='';closeSheet();toast('Cow '+tag+' added');rh();}catch(e){toast('Could not add cow',true);}
 }
+async function delEvent(id,tag){
+  if(!confirm('Delete this calving record?'))return;
+  try{
+    await db('events?id=eq.'+id,'DELETE');
+    events=events.filter(e=>e.id!==id);
+    toast('Record deleted');
+    rcd(tag);
+  }catch(e){toast('Could not delete',true);}
+}
+async function removeCow(tag){
+  if(!confirm('Remove Cow '+tag+' from herd? This also deletes all her calving records.'))return;
+  try{
+    await db('events?cow_tag=eq.'+tag,'DELETE');
+    await db('cows?tag=eq.'+tag,'DELETE');
+    events=events.filter(e=>e.cowTag!==tag);
+    cows=cows.filter(c=>c.tag!==tag);
+    toast('Cow '+tag+' removed');
+    sv('herd',document.querySelector('.nav-tab'));
+  }catch(e){toast('Could not remove cow',true);}
+}
 function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(err?' err':'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 document.getElementById('loading').classList.add('hidden');
 if(sessionStorage.getItem(PSK)==='1'){document.getElementById('pin-screen').classList.add('hidden');init();}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
-</html>v2
+</html>
