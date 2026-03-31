@@ -1,4 +1,4 @@
-const CACHE = 'cattlebook-v1';
+const CACHE = 'cattlebook-v2';
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', e => {
