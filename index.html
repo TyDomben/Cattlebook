@@ -9,1070 +9,382 @@
 <meta name="theme-color" content="#1C1208">
 <link rel="manifest" href="manifest.json">
 <title>CattleBook</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
-/* ── RESET & BASE ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-:root {
-  --ink:      #1C1208;
-  --rust:     #9B3D1A;
-  --rust2:    #C4541F;
-  --gold:     #C8960C;
-  --gold-l:   #FDF3DC;
-  --sage:     #4A6741;
-  --sage-l:   #EBF2E8;
-  --cream:    #F8F3EC;
-  --warm:     #EDE4D5;
-  --pink:     #C0546A;
-  --pink-l:   #FAEAEE;
-  --pink-m:   #E8A0AF;
-  --red:      #9B2020;
-  --red-l:    #FCEAEA;
-  --muted:    rgba(28,18,8,0.45);
-  --border:   rgba(28,18,8,0.10);
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bot: env(safe-area-inset-bottom, 0px);
-}
-html, body { height: 100%; overflow: hidden; }
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--cream);
-  color: var(--ink);
-  display: flex;
-  flex-direction: column;
-}
-
-/* ── STATUS BAR SPACER ── */
-.status-bar {
-  height: var(--safe-top);
-  background: var(--ink);
-  flex-shrink: 0;
-}
-
-/* ── TOP BAR ── */
-.topbar {
-  background: var(--ink);
-  padding: 14px 20px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  position: relative;
-}
-.topbar::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--rust), var(--gold), var(--pink));
-}
-.topbar-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.3rem;
-  font-weight: 900;
-  color: var(--cream);
-  letter-spacing: -0.3px;
-}
-.topbar-title span { color: var(--gold); }
-.topbar-sub {
-  font-size: 0.72rem;
-  color: rgba(248,243,236,0.4);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  margin-top: 1px;
-}
-.topbar-right { display: flex; gap: 8px; align-items: center; }
-.icon-btn {
-  width: 36px; height: 36px;
-  background: rgba(255,255,255,0.08);
-  border: none; border-radius: 50%;
-  color: var(--cream); font-size: 1rem;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
-}
-.icon-btn:active { background: rgba(255,255,255,0.18); }
-
-/* ── NAV TABS ── */
-.nav-tabs {
-  background: var(--warm);
-  display: flex;
-  border-bottom: 1.5px solid var(--border);
-  flex-shrink: 0;
-}
-.nav-tab {
-  flex: 1; padding: 12px 6px 10px;
-  background: none; border: none;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.82rem; font-weight: 500;
-  color: var(--muted);
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -1.5px;
-  transition: all 0.15s;
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-}
-.nav-tab .tab-icon { font-size: 1.2rem; }
-.nav-tab.active { color: var(--ink); font-weight: 600; border-bottom-color: var(--rust); }
-
-/* ── SCROLL AREA ── */
-.scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(20px + var(--safe-bot));
-}
-
-/* ── VIEWS ── */
-.view { display: none; }
-.view.active { display: block; }
-
-/* ── HERD SUMMARY STRIP ── */
-.herd-strip {
-  background: var(--ink);
-  padding: 16px 20px;
-  display: flex; gap: 12px;
-}
-.herd-stat {
-  flex: 1; text-align: center;
-  background: rgba(255,255,255,0.06);
-  border-radius: 10px; padding: 10px 6px;
-}
-.herd-stat .hs-num {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.6rem; font-weight: 900;
-  color: var(--cream); line-height: 1;
-}
-.herd-stat .hs-lbl {
-  font-size: 0.68rem; font-weight: 600;
-  color: rgba(248,243,236,0.4);
-  letter-spacing: 1px; text-transform: uppercase;
-  margin-top: 4px;
-}
-.herd-stat.pink .hs-num { color: var(--pink-m); }
-.herd-stat.sage .hs-num { color: #9BC8A0; }
-.herd-stat.gold .hs-num { color: var(--gold); }
-
-/* ── SEARCH BAR ── */
-.search-wrap {
-  padding: 14px 16px 8px;
-  position: sticky; top: 0;
-  background: var(--cream);
-  z-index: 10;
-  border-bottom: 1px solid var(--border);
-}
-.search-input {
-  width: 100%; padding: 11px 16px 11px 40px;
-  font-family: 'DM Sans', sans-serif; font-size: 1rem;
-  border: 1.5px solid var(--border); border-radius: 12px;
-  background: white; color: var(--ink);
-  transition: border-color 0.15s;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8' stroke='%23aaa' stroke-width='2'/%3E%3Cpath d='m21 21-4.35-4.35' stroke='%23aaa' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: 13px center;
-}
-.search-input:focus { outline: none; border-color: var(--pink); }
-
-/* ── COW LIST ── */
-.section-header {
-  padding: 14px 16px 6px;
-  font-size: 0.72rem; font-weight: 600;
-  letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--muted);
-}
-.cow-list { padding: 0 12px; }
-.cow-card {
-  background: white;
-  border-radius: 14px;
-  margin-bottom: 8px;
-  padding: 14px 16px;
-  display: flex; align-items: center; gap: 14px;
-  box-shadow: 0 1px 8px rgba(28,18,8,0.06);
-  cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.12s;
-  border: 1.5px solid transparent;
-  position: relative;
-  overflow: hidden;
-}
-.cow-card::before {
-  content: '';
-  position: absolute; left: 0; top: 0; bottom: 0;
-  width: 4px;
-  background: var(--pink);
-  border-radius: 4px 0 0 4px;
-}
-.cow-card:active { transform: scale(0.98); box-shadow: 0 1px 4px rgba(28,18,8,0.08); }
-.cow-card.has-history::before { background: var(--rust); }
-.cow-card.never-calved::before { background: var(--border); }
-
-.cow-avatar {
-  width: 44px; height: 44px; border-radius: 50%;
-  background: var(--pink-l);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.3rem; flex-shrink: 0;
-}
-.cow-avatar.never { background: var(--warm); }
-
-.cow-info { flex: 1; min-width: 0; }
-.cow-tag {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.1rem; font-weight: 700;
-  color: var(--ink);
-}
-.cow-meta {
-  font-size: 0.8rem; color: var(--muted);
-  margin-top: 2px; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis;
-}
-.cow-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
-.cow-years { display: flex; gap: 3px; }
-.year-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--border);
-}
-.year-dot.calved { background: var(--sage); }
-.year-dot.died { background: var(--red); }
-.cow-chevron { color: var(--muted); font-size: 0.9rem; }
-
-/* ── SEASON FILTER ── */
-.filter-pills {
-  display: flex; gap: 6px; padding: 8px 16px 4px;
-  overflow-x: auto; -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.filter-pills::-webkit-scrollbar { display: none; }
-.filter-pill {
-  padding: 6px 14px; border-radius: 99px;
-  font-size: 0.82rem; font-weight: 600;
-  background: white; border: 1.5px solid var(--border);
-  color: var(--muted); cursor: pointer; white-space: nowrap;
-  transition: all 0.15s; flex-shrink: 0;
-}
-.filter-pill.active {
-  background: var(--ink); border-color: var(--ink);
-  color: var(--cream);
-}
-
-/* ── COW DETAIL VIEW ── */
-.cow-detail-header {
-  background: var(--ink);
-  padding: 20px 20px 24px;
-  position: relative;
-}
-.cow-detail-header::after {
-  content: '';
-  position: absolute; bottom: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--rust), var(--gold), var(--pink));
-}
-.back-btn {
-  display: flex; align-items: center; gap: 6px;
-  background: none; border: none;
-  color: rgba(248,243,236,0.6);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.88rem; cursor: pointer;
-  margin-bottom: 14px; padding: 0;
-}
-.back-btn:active { color: var(--cream); }
-.detail-tag {
-  font-family: 'Playfair Display', serif;
-  font-size: 2.2rem; font-weight: 900;
-  color: var(--cream); line-height: 1;
-}
-.detail-badge {
-  display: inline-block; margin-top: 6px;
-  background: var(--pink); color: white;
-  font-size: 0.75rem; font-weight: 600;
-  padding: 3px 12px; border-radius: 99px;
-  letter-spacing: 0.3px;
-}
-.detail-lifetime {
-  margin-top: 10px; display: flex; gap: 16px;
-}
-.lifetime-stat .ls-num {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.4rem; font-weight: 900;
-  color: var(--cream);
-}
-.lifetime-stat .ls-lbl {
-  font-size: 0.68rem; font-weight: 600;
-  color: rgba(248,243,236,0.4);
-  text-transform: uppercase; letter-spacing: 1px;
-}
-
-/* ── TIMELINE ── */
-.timeline { padding: 20px 16px; }
-.timeline-title {
-  font-size: 0.72rem; font-weight: 600;
-  letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 14px;
-}
-.timeline-item {
-  display: flex; gap: 14px; margin-bottom: 12px;
-  position: relative;
-}
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  left: 19px; top: 38px; bottom: -12px;
-  width: 2px;
-  background: var(--border);
-}
-.timeline-item:last-child::before { display: none; }
-.tl-dot {
-  width: 40px; height: 40px; border-radius: 50%;
-  flex-shrink: 0; display: flex; align-items: center;
-  justify-content: center; font-size: 1.1rem;
-  position: relative; z-index: 1;
-}
-.tl-dot.calved { background: var(--sage-l); }
-.tl-dot.died    { background: var(--red-l); }
-.tl-dot.no-calf { background: var(--warm); }
-.tl-body {
-  flex: 1;
-  background: white; border-radius: 12px;
-  padding: 12px 14px;
-  box-shadow: 0 1px 6px rgba(28,18,8,0.06);
-  border: 1.5px solid var(--border);
-}
-.tl-year {
-  font-size: 0.72rem; font-weight: 700;
-  color: var(--muted); letter-spacing: 1px;
-  text-transform: uppercase; margin-bottom: 4px;
-}
-.tl-calf {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.05rem; font-weight: 700; color: var(--ink);
-}
-.tl-detail { font-size: 0.82rem; color: var(--muted); margin-top: 3px; }
-.tl-note {
-  margin-top: 6px; padding: 6px 10px;
-  background: var(--gold-l); border-radius: 8px;
-  font-size: 0.8rem; color: var(--rust);
-  font-style: italic;
-}
-.tl-body.died-event { border-color: var(--red); background: var(--red-l); }
-.tl-body.died-event .tl-calf { color: var(--red); }
-
-.add-year-btn {
-  width: 100%; padding: 14px;
-  background: none; border: 2px dashed var(--border);
-  border-radius: 12px; color: var(--muted);
-  font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
-  cursor: pointer; transition: all 0.15s;
-  margin-top: 4px;
-}
-.add-year-btn:active { border-color: var(--pink); color: var(--pink); background: var(--pink-l); }
-
-/* ── ADD ENTRY FORM ── */
-.form-wrap { padding: 20px 16px; }
-.form-section-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.15rem; font-weight: 700;
-  color: var(--ink); margin-bottom: 4px;
-}
-.form-section-sub {
-  font-size: 0.85rem; color: var(--muted);
-  margin-bottom: 20px; line-height: 1.4;
-}
-.field { margin-bottom: 20px; }
-.field label {
-  display: block; font-size: 0.85rem; font-weight: 600;
-  color: var(--ink); margin-bottom: 8px;
-}
-.field label .hint {
-  font-weight: 400; color: var(--muted); font-size: 0.8rem;
-}
-input[type=text], input[type=date], textarea {
-  width: 100%; padding: 14px 16px;
-  font-family: 'DM Sans', sans-serif; font-size: 1rem;
-  border: 1.5px solid var(--border); border-radius: 12px;
-  background: white; color: var(--ink);
-  -webkit-appearance: none; appearance: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-input:focus, textarea:focus {
-  outline: none; border-color: var(--pink);
-  box-shadow: 0 0 0 3px rgba(192,84,106,0.12);
-}
-textarea { min-height: 80px; resize: none; line-height: 1.5; }
-
-/* Big toggle buttons */
-.big-toggles { display: flex; gap: 10px; flex-wrap: wrap; }
-.big-toggle {
-  flex: 1; min-width: 80px;
-  padding: 14px 8px; border-radius: 12px;
-  border: 2px solid var(--border);
-  background: white; cursor: pointer;
-  text-align: center; transition: all 0.15s;
-  font-family: 'DM Sans', sans-serif;
-}
-.big-toggle .bt-icon { font-size: 1.5rem; display: block; margin-bottom: 4px; }
-.big-toggle .bt-label { font-size: 0.88rem; font-weight: 600; color: var(--ink); }
-.big-toggle:active { transform: scale(0.97); }
-.big-toggle.sel-bull   { background: #E8F2FA; border-color: #3A6B8A; }
-.big-toggle.sel-heifer { background: var(--pink-l); border-color: var(--pink); }
-.big-toggle.sel-twins  { background: var(--sage-l); border-color: var(--sage); }
-.big-toggle.sel-died   { background: var(--red-l); border-color: var(--red); }
-
-/* Submit */
-.btn-submit {
-  width: 100%; padding: 18px;
-  background: var(--ink); color: var(--cream);
-  border: none; border-radius: 14px; cursor: pointer;
-  font-family: 'Playfair Display', serif;
-  font-size: 1.15rem; font-weight: 700;
-  box-shadow: 0 4px 20px rgba(28,18,8,0.2);
-  transition: background 0.15s, transform 0.1s;
-  margin-top: 8px;
-}
-.btn-submit:active { background: var(--rust); transform: scale(0.98); }
-
-/* FAB */
-.fab {
-  position: fixed;
-  bottom: calc(80px + var(--safe-bot));
-  right: 20px;
-  width: 56px; height: 56px;
-  background: var(--rust);
-  color: white; border: none; border-radius: 50%;
-  font-size: 1.5rem; cursor: pointer;
-  box-shadow: 0 4px 20px rgba(155,61,26,0.4);
-  display: flex; align-items: center; justify-content: center;
-  transition: transform 0.15s, box-shadow 0.15s;
-  z-index: 50;
-}
-.fab:active { transform: scale(0.93); box-shadow: 0 2px 10px rgba(155,61,26,0.3); }
-.fab.hidden { display: none; }
-
-/* ── SEASON VIEW ── */
-.season-card {
-  background: white;
-  border-radius: 14px;
-  margin: 8px 12px;
-  padding: 16px;
-  box-shadow: 0 1px 8px rgba(28,18,8,0.06);
-}
-.season-year {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.2rem; font-weight: 700; margin-bottom: 12px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.season-year .yr-num { color: var(--ink); }
-.season-year .yr-total {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.82rem; color: var(--muted); font-weight: 400;
-}
-.season-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.ss-box {
-  background: var(--cream); border-radius: 10px;
-  padding: 10px 6px; text-align: center;
-}
-.ss-num {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.4rem; font-weight: 900; line-height: 1;
-}
-.ss-lbl { font-size: 0.65rem; font-weight: 600; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
-.ss-box.bulls .ss-num { color: #3A6B8A; }
-.ss-box.heifers .ss-num { color: var(--pink); }
-.ss-box.twins .ss-num { color: var(--sage); }
-.ss-box.died .ss-num { color: var(--red); }
-
-.progress-bar-wrap { margin-top: 12px; }
-.pb-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-bottom: 5px; }
-.pb-track { height: 8px; background: var(--warm); border-radius: 99px; overflow: hidden; }
-.pb-fill { height: 100%; background: var(--sage); border-radius: 99px; transition: width 0.6s ease; }
-
-/* ── SHEET: ADD COW ── */
-.sheet-overlay {
-  position: fixed; inset: 0;
-  background: rgba(28,18,8,0.5);
-  z-index: 200;
-  display: none;
-  align-items: flex-end;
-  backdrop-filter: blur(3px);
-}
-.sheet-overlay.open { display: flex; }
-.sheet {
-  width: 100%; background: var(--cream);
-  border-radius: 24px 24px 0 0;
-  padding: 0 0 calc(20px + var(--safe-bot));
-  max-height: 92vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
-}
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-.sheet-handle {
-  width: 40px; height: 4px;
-  background: var(--border);
-  border-radius: 99px;
-  margin: 12px auto 0;
-}
-.sheet-header {
-  padding: 16px 20px 0;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.sheet-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.2rem; font-weight: 700;
-}
-.sheet-close {
-  width: 32px; height: 32px;
-  background: var(--warm); border: none; border-radius: 50%;
-  font-size: 0.9rem; cursor: pointer; color: var(--ink);
-  display: flex; align-items: center; justify-content: center;
-}
-
-/* ── TOAST ── */
-.toast {
-  position: fixed;
-  bottom: calc(90px + var(--safe-bot));
-  left: 50%; transform: translateX(-50%) translateY(60px);
-  background: var(--sage); color: white;
-  padding: 12px 24px; border-radius: 99px;
-  font-size: 0.95rem; font-weight: 600;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-  z-index: 999; white-space: nowrap;
-  pointer-events: none;
-}
-.toast.show { transform: translateX(-50%) translateY(0); }
-.toast.err { background: var(--red); }
-
-/* ── EMPTY STATE ── */
-.empty {
-  text-align: center; padding: 48px 32px;
-  color: var(--muted);
-}
-.empty .e-icon { font-size: 3rem; margin-bottom: 12px; }
-.empty p { font-family: 'Playfair Display', serif; font-size: 1rem; font-style: italic; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--ink:#1C1208;--rust:#9B3D1A;--gold:#C8960C;--gold-l:#FDF3DC;--sage:#4A6741;--sage-l:#EBF2E8;--cream:#F8F3EC;--warm:#EDE4D5;--pink:#C0546A;--pink-l:#FAEAEE;--pink-m:#E8A0AF;--red:#9B2020;--red-l:#FCEAEA;--muted:rgba(28,18,8,0.45);--border:rgba(28,18,8,0.10);--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;overflow:hidden}
+body{font-family:"DM Sans",sans-serif;background:var(--cream);color:var(--ink);display:flex;flex-direction:column}
+.pin-screen{position:fixed;inset:0;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;padding:40px 32px}
+.pin-screen.hidden{display:none}
+.pin-logo{font-family:"Playfair Display",serif;font-size:2.2rem;font-weight:900;color:var(--cream);margin-bottom:6px}
+.pin-logo span{color:var(--gold)}
+.pin-tagline{font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:rgba(248,243,236,0.35);margin-bottom:48px}
+.pin-label{font-size:0.85rem;font-weight:600;color:rgba(248,243,236,0.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:20px}
+.pin-dots{display:flex;gap:16px;margin-bottom:40px}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.15);transition:background 0.15s}
+.pin-dot.filled{background:var(--gold)}
+.pin-dot.error{background:var(--red)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px}
+.pin-btn{aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,0.08);border:none;color:var(--cream);font-family:"Playfair Display",serif;font-size:1.5rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.12s,transform 0.1s}
+.pin-btn:active{background:rgba(255,255,255,0.2);transform:scale(0.94)}
+.pin-btn.del{font-family:"DM Sans",sans-serif;font-size:1.1rem}
+.pin-btn.empty{background:none;cursor:default}
+.pin-error{color:var(--red);font-size:0.85rem;margin-top:16px;height:20px;text-align:center}
+.status-bar{height:var(--safe-top);background:var(--ink);flex-shrink:0}
+.topbar{background:var(--ink);padding:14px 20px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative}
+.topbar::after{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--rust),var(--gold),var(--pink))}
+.topbar-title{font-family:"Playfair Display",serif;font-size:1.3rem;font-weight:900;color:var(--cream)}
+.topbar-title span{color:var(--gold)}
+.topbar-sub{font-size:0.72rem;color:rgba(248,243,236,0.4);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.icon-btn{width:36px;height:36px;background:rgba(255,255,255,0.08);border:none;border-radius:50%;color:var(--cream);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.icon-btn:active{background:rgba(255,255,255,0.18)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--sage)}
+.sync-dot.syncing{background:var(--gold);animation:pulse 1s infinite}
+.sync-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.nav-tabs{background:var(--warm);display:flex;border-bottom:1.5px solid var(--border);flex-shrink:0}
+.nav-tab{flex:1;padding:12px 6px 10px;background:none;border:none;font-family:"DM Sans",sans-serif;font-size:0.82rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1.5px;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:3px}
+.nav-tab .ti{font-size:1.2rem}
+.nav-tab.active{color:var(--ink);font-weight:600;border-bottom-color:var(--rust)}
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(20px + var(--safe-bot))}
+.view{display:none}
+.view.active{display:block;animation:fu 0.25s ease}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.herd-strip{background:var(--ink);padding:16px 20px;display:flex;gap:12px}
+.herd-stat{flex:1;text-align:center;background:rgba(255,255,255,0.06);border-radius:10px;padding:10px 6px}
+.hs-num{font-family:"Playfair Display",serif;font-size:1.6rem;font-weight:900;color:var(--cream);line-height:1}
+.hs-lbl{font-size:0.68rem;font-weight:600;color:rgba(248,243,236,0.4);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.hs-pink .hs-num{color:var(--pink-m)}
+.hs-sage .hs-num{color:#9BC8A0}
+.hs-gold .hs-num{color:var(--gold)}
+.search-wrap{padding:14px 16px 8px;position:sticky;top:0;background:var(--cream);z-index:10;border-bottom:1px solid var(--border)}
+.search-input{width:100%;padding:11px 16px 11px 40px;font-family:"DM Sans",sans-serif;font-size:1rem;border:1.5px solid var(--border);border-radius:12px;background:white;color:var(--ink);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8' stroke='%23aaa' stroke-width='2'/%3E%3Cpath d='m21 21-4.35-4.35' stroke='%23aaa' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:13px center}
+.search-input:focus{outline:none;border-color:var(--pink)}
+.filter-pills{display:flex;gap:6px;padding:8px 16px 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.filter-pills::-webkit-scrollbar{display:none}
+.fp{padding:6px 14px;border-radius:99px;font-size:0.82rem;font-weight:600;background:white;border:1.5px solid var(--border);color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.15s}
+.fp.active{background:var(--ink);border-color:var(--ink);color:var(--cream)}
+.section-header{padding:14px 16px 6px;font-size:0.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.cow-list{padding:0 12px}
+.cow-card{background:white;border-radius:14px;margin-bottom:8px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 8px rgba(28,18,8,0.06);cursor:pointer;transition:transform 0.12s;position:relative;overflow:hidden}
+.cow-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pink);border-radius:4px 0 0 4px}
+.cow-card:active{transform:scale(0.98)}
+.cow-card.hh::before{background:var(--rust)}
+.cow-card.nc::before{background:var(--border)}
+.cow-av{width:44px;height:44px;border-radius:50%;background:var(--pink-l);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.cow-av.nv{background:var(--warm)}
+.cow-info{flex:1;min-width:0}
+.cow-tag-label{font-family:"Playfair Display",serif;font-size:1.1rem;font-weight:700}
+.cow-meta{font-size:0.8rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cow-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.cow-years{display:flex;gap:3px}
+.yd{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.yd.c{background:var(--sage)}
+.yd.d{background:var(--red)}
+.cow-chev{color:var(--muted);font-size:0.9rem}
+.cow-dh{background:var(--ink);padding:20px 20px 24px;position:relative}
+.cow-dh::after{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--rust),var(--gold),var(--pink))}
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:rgba(248,243,236,0.6);font-family:"DM Sans",sans-serif;font-size:0.88rem;cursor:pointer;margin-bottom:14px;padding:0}
+.back-btn:active{color:var(--cream)}
+.detail-tag{font-family:"Playfair Display",serif;font-size:2.2rem;font-weight:900;color:var(--cream);line-height:1}
+.detail-badge{display:inline-block;margin-top:6px;background:var(--pink);color:white;font-size:0.75rem;font-weight:600;padding:3px 12px;border-radius:99px}
+.detail-lifetime{margin-top:10px;display:flex;gap:16px}
+.ls-num{font-family:"Playfair Display",serif;font-size:1.4rem;font-weight:900;color:var(--cream)}
+.ls-lbl{font-size:0.68rem;font-weight:600;color:rgba(248,243,236,0.4);text-transform:uppercase;letter-spacing:1px}
+.timeline{padding:20px 16px}
+.tl-title{font-size:0.72rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.tl-item{display:flex;gap:14px;margin-bottom:12px;position:relative}
+.tl-item::before{content:"";position:absolute;left:19px;top:38px;bottom:-12px;width:2px;background:var(--border)}
+.tl-item:last-child::before{display:none}
+.tl-dot{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.1rem;position:relative;z-index:1}
+.tl-dot.cal{background:var(--sage-l)}
+.tl-dot.die{background:var(--red-l)}
+.tl-dot.noc{background:var(--warm)}
+.tl-body{flex:1;background:white;border-radius:12px;padding:12px 14px;box-shadow:0 1px 6px rgba(28,18,8,0.06);border:1.5px solid var(--border)}
+.tl-yr{font-size:0.72rem;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.tl-calf{font-family:"Playfair Display",serif;font-size:1.05rem;font-weight:700;color:var(--ink)}
+.tl-detail{font-size:0.82rem;color:var(--muted);margin-top:3px}
+.tl-note{margin-top:6px;padding:6px 10px;background:var(--gold-l);border-radius:8px;font-size:0.8rem;color:var(--rust);font-style:italic}
+.tl-body.de{border-color:var(--red);background:var(--red-l)}
+.tl-body.de .tl-calf{color:var(--red)}
+.add-yr-btn{width:100%;padding:14px;background:none;border:2px dashed var(--border);border-radius:12px;color:var(--muted);font-family:"DM Sans",sans-serif;font-size:0.95rem;cursor:pointer;transition:all 0.15s;margin-top:4px}
+.add-yr-btn:active{border-color:var(--pink);color:var(--pink);background:var(--pink-l)}
+.season-card{background:white;border-radius:14px;margin:8px 12px;padding:16px;box-shadow:0 1px 8px rgba(28,18,8,0.06)}
+.sy{font-family:"Playfair Display",serif;font-size:1.2rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.sy-num{color:var(--ink)}
+.sy-tot{font-family:"DM Sans",sans-serif;font-size:0.82rem;color:var(--muted);font-weight:400}
+.ss{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ss-box{background:var(--cream);border-radius:10px;padding:10px 6px;text-align:center}
+.ss-n{font-family:"Playfair Display",serif;font-size:1.4rem;font-weight:900;line-height:1}
+.ss-l{font-size:0.65rem;font-weight:600;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:0.5px}
+.ss-box.bu .ss-n{color:#3A6B8A}
+.ss-box.he .ss-n{color:var(--pink)}
+.ss-box.tw .ss-n{color:var(--sage)}
+.ss-box.di .ss-n{color:var(--red)}
+.pb-wrap{margin-top:12px}
+.pb-lbl{display:flex;justify-content:space-between;font-size:0.78rem;color:var(--muted);margin-bottom:5px}
+.pb-track{height:8px;background:var(--warm);border-radius:99px;overflow:hidden}
+.pb-fill{height:100%;background:var(--sage);border-radius:99px;transition:width 0.6s ease}
+.fw{padding:20px 16px}
+.ft{font-family:"Playfair Display",serif;font-size:1.15rem;font-weight:700;margin-bottom:4px}
+.fs{font-size:0.85rem;color:var(--muted);margin-bottom:20px;line-height:1.4}
+.field{margin-bottom:20px}
+.field label{display:block;font-size:0.85rem;font-weight:600;margin-bottom:8px}
+.field label .hint{font-weight:400;color:var(--muted);font-size:0.8rem}
+input[type=text],input[type=date],textarea{width:100%;padding:14px 16px;font-family:"DM Sans",sans-serif;font-size:1rem;border:1.5px solid var(--border);border-radius:12px;background:white;color:var(--ink);-webkit-appearance:none;transition:border-color 0.15s,box-shadow 0.15s}
+input:focus,textarea:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(192,84,106,0.12)}
+textarea{min-height:80px;resize:none;line-height:1.5}
+.bts{display:flex;gap:10px;flex-wrap:wrap}
+.bt{flex:1;min-width:80px;padding:14px 8px;border-radius:12px;border:2px solid var(--border);background:white;cursor:pointer;text-align:center;font-family:"DM Sans",sans-serif;transition:all 0.15s}
+.bt .bti{font-size:1.5rem;display:block;margin-bottom:4px}
+.bt .btl{font-size:0.88rem;font-weight:600;color:var(--ink)}
+.bt:active{transform:scale(0.97)}
+.bt.sb{background:#E8F2FA;border-color:#3A6B8A}
+.bt.sh{background:var(--pink-l);border-color:var(--pink)}
+.bt.st{background:var(--sage-l);border-color:var(--sage)}
+.bt.sd{background:var(--red-l);border-color:var(--red)}
+.btn-sub{width:100%;padding:18px;background:var(--ink);color:var(--cream);border:none;border-radius:14px;cursor:pointer;font-family:"Playfair Display",serif;font-size:1.15rem;font-weight:700;box-shadow:0 4px 20px rgba(28,18,8,0.2);transition:background 0.15s,transform 0.1s;margin-top:8px}
+.btn-sub:active{background:var(--rust);transform:scale(0.98)}
+.btn-sub:disabled{background:#999;cursor:not-allowed;box-shadow:none}
+.sov{position:fixed;inset:0;background:rgba(28,18,8,0.5);z-index:200;display:none;align-items:flex-end;backdrop-filter:blur(3px)}
+.sov.open{display:flex}
+.sheet{width:100%;background:var(--cream);border-radius:24px 24px 0 0;padding:0 0 calc(20px + var(--safe-bot));max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:su 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sh-handle{width:40px;height:4px;background:var(--border);border-radius:99px;margin:12px auto 0}
+.shdr{padding:16px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.shtl{font-family:"Playfair Display",serif;font-size:1.2rem;font-weight:700}
+.shcl{width:32px;height:32px;background:var(--warm);border:none;border-radius:50%;font-size:0.9rem;cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.fab{position:fixed;bottom:calc(80px + var(--safe-bot));right:20px;width:56px;height:56px;background:var(--rust);color:white;border:none;border-radius:50%;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 20px rgba(155,61,26,0.4);display:flex;align-items:center;justify-content:center;z-index:50;transition:transform 0.15s}
+.fab:active{transform:scale(0.93)}
+.fab.hidden{display:none}
+.loverlay{position:fixed;inset:0;background:var(--ink);z-index:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.loverlay.hidden{display:none}
+.llogo{font-family:"Playfair Display",serif;font-size:2rem;font-weight:900;color:var(--cream)}
+.llogo span{color:var(--gold)}
+.lspinner{width:32px;height:32px;border:3px solid rgba(255,255,255,0.1);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ltxt{font-size:0.85rem;color:rgba(248,243,236,0.4);letter-spacing:1px}
+.toast{position:fixed;bottom:calc(90px + var(--safe-bot));left:50%;transform:translateX(-50%) translateY(60px);background:var(--sage);color:white;padding:12px 24px;border-radius:99px;font-size:0.95rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.15);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);z-index:999;white-space:nowrap;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--red)}
+.empty{text-align:center;padding:48px 32px;color:var(--muted)}
+.empty .ei{font-size:3rem;margin-bottom:12px}
+.empty p{font-family:"Playfair Display",serif;font-size:1rem;font-style:italic}
 </style>
 </head>
 <body>
-
+<div class="loverlay" id="loading"><div class="llogo">Cattle<span>Book</span></div><div class="lspinner"></div><div class="ltxt">Loading herd…</div></div>
+<div class="pin-screen" id="pin-screen">
+  <div class="pin-logo">Cattle<span>Book</span></div>
+  <div class="pin-tagline">Brandon · Pink Herd · 2025</div>
+  <div class="pin-label">Enter PIN to continue</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-pad">
+    <button class="pin-btn" onclick="pp('1')">1</button><button class="pin-btn" onclick="pp('2')">2</button><button class="pin-btn" onclick="pp('3')">3</button>
+    <button class="pin-btn" onclick="pp('4')">4</button><button class="pin-btn" onclick="pp('5')">5</button><button class="pin-btn" onclick="pp('6')">6</button>
+    <button class="pin-btn" onclick="pp('7')">7</button><button class="pin-btn" onclick="pp('8')">8</button><button class="pin-btn" onclick="pp('9')">9</button>
+    <button class="pin-btn empty"></button><button class="pin-btn" onclick="pp('0')">0</button><button class="pin-btn del" onclick="pd()">&#9003;</button>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+</div>
 <div class="status-bar"></div>
-
 <div class="topbar">
-  <div>
-    <div class="topbar-title">Cattle<span>Book</span></div>
-    <div class="topbar-sub">Brandon · Pink Herd · 2025</div>
-  </div>
-  <div class="topbar-right">
-    <button class="icon-btn" onclick="openAddCow()" title="Add cow">＋</button>
-  </div>
+  <div><div class="topbar-title">Cattle<span>Book</span></div><div class="topbar-sub">Brandon &middot; Pink Herd &middot; 2025</div></div>
+  <div class="topbar-right"><div class="sync-dot" id="sync-dot"></div><button class="icon-btn" onclick="openSheet()">&#65291;</button></div>
 </div>
-
 <div class="nav-tabs">
-  <button class="nav-tab active" onclick="showView('herd',this)">
-    <span class="tab-icon">🐄</span>Herd
-  </button>
-  <button class="nav-tab" onclick="showView('season',this)">
-    <span class="tab-icon">📅</span>Season
-  </button>
-  <button class="nav-tab" onclick="showView('add',this)">
-    <span class="tab-icon">➕</span>Add Calf
-  </button>
+  <button class="nav-tab active" onclick="sv('herd',this)"><span class="ti">&#128004;</span>Herd</button>
+  <button class="nav-tab" onclick="sv('season',this)"><span class="ti">&#128197;</span>Season</button>
+  <button class="nav-tab" onclick="sv('add',this)"><span class="ti">&#10133;</span>Add Calf</button>
 </div>
-
-<div class="scroll-area" id="scroll-area">
-
-  <!-- ═══ HERD VIEW ═══ -->
+<div class="scroll-area" id="sa">
   <div class="view active" id="view-herd">
-    <div class="herd-strip" id="herd-strip">
-      <div class="herd-stat pink">
-        <div class="hs-num" id="hs-total">—</div>
-        <div class="hs-lbl">Cows</div>
-      </div>
-      <div class="herd-stat sage">
-        <div class="hs-num" id="hs-calved">—</div>
-        <div class="hs-lbl">Calved '25</div>
-      </div>
-      <div class="herd-stat gold">
-        <div class="hs-num" id="hs-pct">—</div>
-        <div class="hs-lbl">Complete</div>
-      </div>
+    <div class="herd-strip">
+      <div class="herd-stat hs-pink"><div class="hs-num" id="hs-t">&#8212;</div><div class="hs-lbl">Cows</div></div>
+      <div class="herd-stat hs-sage"><div class="hs-num" id="hs-c">&#8212;</div><div class="hs-lbl">Calved &#39;25</div></div>
+      <div class="herd-stat hs-gold"><div class="hs-num" id="hs-p">&#8212;</div><div class="hs-lbl">Complete</div></div>
     </div>
-
-    <div class="search-wrap">
-      <input class="search-input" type="text" id="search-input"
-        placeholder="Search by tag number…" oninput="renderHerd()">
+    <div class="search-wrap"><input class="search-input" type="text" id="si" placeholder="Search by tag number&#8230;" oninput="rh()"></div>
+    <div class="filter-pills">
+      <button class="fp active" onclick="sf('all',this)">All Cows</button>
+      <button class="fp" onclick="sf('calved',this)">Calved &#10003;</button>
+      <button class="fp" onclick="sf('waiting',this)">Not Yet</button>
+      <button class="fp" onclick="sf('concern',this)">&#9888; Flags</button>
     </div>
-
-    <div class="filter-pills" id="filter-pills">
-      <button class="filter-pill active" data-filter="all" onclick="setFilter('all',this)">All Cows</button>
-      <button class="filter-pill" data-filter="calved" onclick="setFilter('calved',this)">Calved ✓</button>
-      <button class="filter-pill" data-filter="waiting" onclick="setFilter('waiting',this)">Not Yet</button>
-      <button class="filter-pill" data-filter="concern" onclick="setFilter('concern',this)">⚠ Flags</button>
-    </div>
-
-    <div class="section-header" id="herd-section-label">All Cows</div>
-    <div class="cow-list" id="cow-list"></div>
+    <div class="section-header" id="sl">All Cows</div>
+    <div class="cow-list" id="cl"></div>
   </div>
-
-  <!-- ═══ SEASON VIEW ═══ -->
-  <div class="view" id="view-season">
-    <div id="season-content"></div>
-  </div>
-
-  <!-- ═══ ADD CALF VIEW ═══ -->
+  <div class="view" id="view-season"><div id="sc2"></div></div>
   <div class="view" id="view-add">
-    <div class="form-wrap">
-      <div class="form-section-title">Record a Calf</div>
-      <div class="form-section-sub">Fill in what you know — date and sex are the most important.</div>
-
-      <div class="field">
-        <label>Cow Tag <span class="hint">— the mother's tag number</span></label>
-        <input type="text" id="f-tag" placeholder="e.g. 314" autocomplete="off" autocorrect="off" autocapitalize="off">
-      </div>
-
-      <div class="field">
-        <label>Calving Date</label>
-        <input type="date" id="f-date">
-      </div>
-
+    <div class="fw">
+      <div class="ft">Record a Calf</div>
+      <div class="fs">Fill in what you know &#8212; date and sex are the most important.</div>
+      <div class="field"><label>Cow Tag <span class="hint">&#8212; the mother&#39;s tag number</span></label><input type="text" id="f-tag" placeholder="e.g. 314" autocomplete="off" autocorrect="off" autocapitalize="off"></div>
+      <div class="field"><label>Calving Date</label><input type="date" id="f-date"></div>
       <div class="field">
         <label>Calf Sex</label>
-        <div class="big-toggles">
-          <button class="big-toggle" id="bt-bull" onclick="selSex('B')">
-            <span class="bt-icon">🐂</span>
-            <span class="bt-label">Bull</span>
-          </button>
-          <button class="big-toggle" id="bt-heifer" onclick="selSex('H')">
-            <span class="bt-icon">🐄</span>
-            <span class="bt-label">Heifer</span>
-          </button>
-          <button class="big-toggle" id="bt-twins" onclick="selSex('Twins')">
-            <span class="bt-icon">👥</span>
-            <span class="bt-label">Twins</span>
-          </button>
-          <button class="big-toggle" id="bt-died" onclick="selSex('Died')">
-            <span class="bt-icon">✝</span>
-            <span class="bt-label">Lost</span>
-          </button>
+        <div class="bts">
+          <button class="bt" id="bt-b" onclick="ss('B')"><span class="bti">&#128002;</span><span class="btl">Bull</span></button>
+          <button class="bt" id="bt-h" onclick="ss('H')"><span class="bti">&#128004;</span><span class="btl">Heifer</span></button>
+          <button class="bt" id="bt-t" onclick="ss('Twins')"><span class="bti">&#128101;</span><span class="btl">Twins</span></button>
+          <button class="bt" id="bt-d" onclick="ss('Died')"><span class="bti">&#10013;</span><span class="btl">Lost</span></button>
         </div>
       </div>
-
-      <div class="field">
-        <label>Notes <span class="hint">— anything worth remembering</span></label>
-        <textarea id="f-notes" placeholder="e.g. red calf, small, needed help, sell bad feet…"></textarea>
-      </div>
-
-      <button class="btn-submit" onclick="submitCalf()">Save Calf →</button>
+      <div class="field"><label>Notes <span class="hint">&#8212; anything worth remembering</span></label><textarea id="f-notes" placeholder="e.g. red calf, small, needed help&#8230;"></textarea></div>
+      <button class="btn-sub" id="sub-btn" onclick="submitCalf()">Save Calf &#8594;</button>
     </div>
   </div>
-
-  <!-- ═══ COW DETAIL VIEW ═══ -->
-  <div class="view" id="view-cow">
-    <div class="cow-detail-header" id="cow-detail-header"></div>
-    <div class="timeline" id="cow-timeline"></div>
-  </div>
-
-</div><!-- end scroll-area -->
-
-<!-- FAB -->
-<button class="fab" id="fab" onclick="showView('add', document.querySelector('.nav-tab:nth-child(3)'))">＋</button>
-
-<!-- Add Cow Sheet -->
-<div class="sheet-overlay" id="add-cow-sheet" onclick="maybeCloseSheet(event)">
+  <div class="view" id="view-cow"><div class="cow-dh" id="cdh"></div><div class="timeline" id="ctl"></div></div>
+</div>
+<button class="fab" id="fab" onclick="sv('add',document.querySelector('.nav-tab:nth-child(3)'))">&#65291;</button>
+<div class="sov" id="add-sheet" onclick="maybeClose(event)">
   <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-header">
-      <div class="sheet-title">Add a Cow to Herd</div>
-      <button class="sheet-close" onclick="closeAddCow()">✕</button>
-    </div>
-    <div class="form-wrap" style="padding-top:16px">
-      <div class="field">
-        <label>Tag Number</label>
-        <input type="text" id="new-tag" placeholder="e.g. 950" autocorrect="off" autocapitalize="off">
-      </div>
-      <div class="field">
-        <label>Notes <span class="hint">— optional</span></label>
-        <input type="text" id="new-notes" placeholder="e.g. purchased spring 2025, red heifer">
-      </div>
-      <button class="btn-submit" onclick="addCow()">Add to Herd →</button>
+    <div class="sh-handle"></div>
+    <div class="shdr"><div class="shtl">Add a Cow to Herd</div><button class="shcl" onclick="closeSheet()">&#10005;</button></div>
+    <div class="fw" style="padding-top:16px">
+      <div class="field"><label>Tag Number</label><input type="text" id="new-tag" placeholder="e.g. 950" autocorrect="off" autocapitalize="off"></div>
+      <div class="field"><label>Notes <span class="hint">&#8212; optional</span></label><input type="text" id="new-notes" placeholder="e.g. purchased spring 2025"></div>
+      <button class="btn-sub" onclick="addCow()">Add to Herd &#8594;</button>
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
-
 <script>
-// ── SEED DATA ─────────────────────────────────────────────────────────
-const BRANDON_2025 = [2,3,4,5,7,8,24,29,30,41,42,43,44,46,46,47,48,49,50,
-  51,52,55,66,102,104,106,107,108,111,112,114,115,116,117,210,224,250,251,
-  252,253,254,255,256,257,258,259,307,360,361,362,363,364,365,366,367,368,
-  369,418,420,422,423,425,427,432,433,437,438,504,507,508,514,521,522,666,
-  667,671,672,674,711,713,715,751,752,756,757,758,762,764,831,842,884,887,
-  898,941,942,943,944,6108];
-
-// Historical calving events: {cowTag, year, sex, date, notes, outcome}
-const SEED_EVENTS = [
-  // 2024 selection
-  {cowTag:'2',year:2024,sex:'H',date:'2024-03-29',notes:null,outcome:'Alive'},
-  {cowTag:'3',year:2024,sex:'B',date:'2024-04-27',notes:null,outcome:'Alive'},
-  {cowTag:'4',year:2024,sex:'H',date:'2024-03-24',notes:'Picked up',outcome:'Alive'},
-  {cowTag:'5',year:2024,sex:'B',date:'2024-04-07',notes:null,outcome:'Alive'},
-  {cowTag:'29',year:2024,sex:'B',date:'2024-04-04',notes:null,outcome:'Alive'},
-  {cowTag:'30',year:2024,sex:'Twins',date:'2024-03-30',notes:'Twins - Sold one (lost tag)',outcome:'Alive'},
-  {cowTag:'55',year:2024,sex:'B',date:'2024-04-03',notes:'born up north',outcome:'Alive'},
-  {cowTag:'66',year:2024,sex:'B',date:'2024-03-29',notes:null,outcome:'Alive'},
-  {cowTag:'102',year:2024,sex:'H',date:'2024-03-30',notes:null,outcome:'Alive'},
-  {cowTag:'103',year:2024,sex:'B',date:'2024-03-25',notes:null,outcome:'Alive'},
-  {cowTag:'111',year:2024,sex:'H',date:'2024-04-01',notes:null,outcome:'Alive'},
-  {cowTag:'751',year:2024,sex:'B',date:'2024-04-05',notes:'red calf',outcome:'Alive'},
-  {cowTag:'752',year:2024,sex:null,date:'2024-03-09',notes:'My Fault',outcome:null},
-  {cowTag:'756',year:2024,sex:'H',date:'2024-04-13',notes:'red',outcome:'Alive'},
-  {cowTag:'758',year:2024,sex:'H',date:'2024-03-29',notes:null,outcome:'Alive'},
-  {cowTag:'762',year:2024,sex:'H',date:'2024-03-30',notes:null,outcome:'Alive'},
-  {cowTag:'764',year:2024,sex:'B',date:'2024-03-21',notes:null,outcome:'Alive'},
-  {cowTag:'887',year:2024,sex:'B',date:'2024-03-31',notes:null,outcome:'Alive'},
-  {cowTag:'941',year:2024,sex:'B',date:'2024-04-26',notes:'RWF',outcome:'Alive'},
-  {cowTag:'944',year:2024,sex:'H',date:'2024-04-02',notes:null,outcome:'Alive'},
-  {cowTag:'6108',year:2024,sex:'B',date:'2024-03-25',notes:null,outcome:'Alive'},
-  // 2022 sample
-  {cowTag:'55',year:2022,sex:'B',date:'2022-03-28',notes:null,outcome:'Alive'},
-  {cowTag:'102',year:2022,sex:'H',date:'2022-04-01',notes:null,outcome:'Alive'},
-  {cowTag:'751',year:2022,sex:'H',date:'2022-03-22',notes:null,outcome:'Alive'},
-  {cowTag:'887',year:2022,sex:'B',date:'2022-04-03',notes:null,outcome:'Alive'},
-  {cowTag:'762',year:2022,sex:'B',date:'2022-03-30',notes:null,outcome:'Alive'},
-  {cowTag:'758',year:2022,sex:'H',date:'2022-03-25',notes:null,outcome:'Died'},
-  {cowTag:'30',year:2022,sex:'Twins',date:'2022-04-01',notes:'Both bulls',outcome:'Alive'},
-];
-
-// ── STATE ─────────────────────────────────────────────────────────────
-const KEY_COWS   = 'cb_cows_v1';
-const KEY_EVENTS = 'cb_events_v1';
-let cows = [], events = [];
-let currentFilter = 'all';
-let selectedSex = null;
-let activeCowTag = null;
-
-function load() {
-  try {
-    const sc = localStorage.getItem(KEY_COWS);
-    const se = localStorage.getItem(KEY_EVENTS);
-    if (sc) { cows = JSON.parse(sc); events = JSON.parse(se || '[]'); return; }
-  } catch(e) {}
-  // Seed
-  cows = BRANDON_2025.map((t,i) => ({
-    id: 'c'+i, tag: String(t), herd:'Pink', addedYear: 2025, notes: null
-  }));
-  // Deduplicate tags
-  const seen = new Set();
-  cows = cows.filter(c => { if(seen.has(c.tag)) return false; seen.add(c.tag); return true; });
-  events = SEED_EVENTS.map((e,i) => ({...e, id:'e'+i, cowTag: String(e.cowTag)}));
-  save();
+const SB_URL='https://mzhpdvdxmkeihegzifkw.supabase.co';
+const SB_KEY='sb_publishable_ztZnm2MxAVlzXTzuxcux9Q_N9Sh9WzB';
+const PIN='1234';
+const PSK='cb_pin_ok';
+async function db(path,method,body){
+  const h={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+  if(method==='POST')h['Prefer']='return=representation';
+  const r=await fetch(SB_URL+'/rest/v1/'+path,{method:method||'GET',headers:h,body:body?JSON.stringify(body):null});
+  if(!r.ok)throw new Error(await r.text());
+  if(r.status===204)return[];
+  return r.json();
 }
-
-function save() {
-  localStorage.setItem(KEY_COWS, JSON.stringify(cows));
-  localStorage.setItem(KEY_EVENTS, JSON.stringify(events));
+const TAGS=['2','3','4','5','7','8','24','29','30','41','42','43','44','46','47','48','49','50','51','52','55','66','102','104','106','107','108','111','112','114','115','116','117','210','224','250','251','252','253','254','255','256','257','258','259','307','360','361','362','363','364','365','366','367','368','369','418','420','422','423','425','427','432','433','437','438','504','507','508','514','521','522','666','667','671','672','674','711','713','715','751','752','756','757','758','762','764','831','842','884','887','898','941','942','943','944','6108'];
+const SEVT=[{cow_tag:'2',year:2024,sex:'H',date:'2024-03-29',notes:null,outcome:'Alive'},{cow_tag:'3',year:2024,sex:'B',date:'2024-04-27',notes:null,outcome:'Alive'},{cow_tag:'4',year:2024,sex:'H',date:'2024-03-24',notes:'Picked up',outcome:'Alive'},{cow_tag:'5',year:2024,sex:'B',date:'2024-04-07',notes:null,outcome:'Alive'},{cow_tag:'29',year:2024,sex:'B',date:'2024-04-04',notes:null,outcome:'Alive'},{cow_tag:'30',year:2024,sex:'Twins',date:'2024-03-30',notes:'Twins - Sold one',outcome:'Alive'},{cow_tag:'55',year:2024,sex:'B',date:'2024-04-03',notes:'born up north',outcome:'Alive'},{cow_tag:'66',year:2024,sex:'B',date:'2024-03-29',notes:null,outcome:'Alive'},{cow_tag:'102',year:2024,sex:'H',date:'2024-03-30',notes:null,outcome:'Alive'},{cow_tag:'751',year:2024,sex:'B',date:'2024-04-05',notes:'red calf',outcome:'Alive'},{cow_tag:'756',year:2024,sex:'H',date:'2024-04-13',notes:'red',outcome:'Alive'},{cow_tag:'758',year:2024,sex:'H',date:'2024-03-29',notes:null,outcome:'Alive'},{cow_tag:'762',year:2024,sex:'H',date:'2024-03-30',notes:null,outcome:'Alive'},{cow_tag:'887',year:2024,sex:'B',date:'2024-03-31',notes:null,outcome:'Alive'},{cow_tag:'6108',year:2024,sex:'B',date:'2024-03-25',notes:null,outcome:'Alive'},{cow_tag:'55',year:2022,sex:'B',date:'2022-03-28',notes:null,outcome:'Alive'},{cow_tag:'102',year:2022,sex:'H',date:'2022-04-01',notes:null,outcome:'Alive'},{cow_tag:'751',year:2022,sex:'H',date:'2022-03-22',notes:null,outcome:'Alive'},{cow_tag:'762',year:2022,sex:'B',date:'2022-03-30',notes:null,outcome:'Alive'},{cow_tag:'758',year:2022,sex:'H',date:'2022-03-25',notes:null,outcome:'Died'},{cow_tag:'30',year:2022,sex:'Twins',date:'2022-04-01',notes:'Both bulls',outcome:'Alive'}];
+let cows=[],events=[],filt='all',selSex=null;
+let pin='';
+function pp(d){if(pin.length>=4)return;pin+=d;upd();if(pin.length===4)chk();}
+function pd(){pin=pin.slice(0,-1);upd();document.getElementById('pin-error').textContent='';}
+function upd(s){for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.className='pin-dot';if(s)d.classList.add(s);else if(i<pin.length)d.classList.add('filled');}}
+function chk(){if(pin===PIN){sessionStorage.setItem(PSK,'1');document.getElementById('pin-screen').classList.add('hidden');init();}else{upd('error');document.getElementById('pin-error').textContent='Wrong PIN — try again';setTimeout(()=>{pin='';upd();document.getElementById('pin-error').textContent='';},1000);}}
+function sync(s){document.getElementById('sync-dot').className='sync-dot'+(s==='syncing'?' syncing':s==='error'?' error':'');}
+async function init(){
+  document.getElementById('loading').classList.remove('hidden');sync('syncing');
+  try{
+    const[dc,de]=await Promise.all([db('cows?select=*&order=tag'),db('events?select=*&order=year.desc')]);
+    if(dc.length===0){await seed();}else{cows=dc.map(c=>({...c,tag:String(c.tag)}));events=de.map(e=>({...e,cowTag:String(e.cow_tag)}));}
+    sync('ok');
+  }catch(e){sync('error');toast('Offline mode',true);fallback();}
+  document.getElementById('loading').classList.add('hidden');rh();
 }
-
-// ── HELPERS ──────────────────────────────────────────────────────────
-function eventsForCow(tag, year) {
-  return events.filter(e => e.cowTag === String(tag) && (year ? e.year === year : true))
-               .sort((a,b) => b.year - a.year);
+async function seed(){
+  await db('cows','POST',TAGS.map((t,i)=>({id:'c'+i,tag:t,herd:'Pink',added_year:2025,notes:null})));
+  await db('events','POST',SEVT.map((e,i)=>({...e,id:'s'+i})));
+  const[dc,de]=await Promise.all([db('cows?select=*&order=tag'),db('events?select=*&order=year.desc')]);
+  cows=dc.map(c=>({...c,tag:String(c.tag)}));events=de.map(e=>({...e,cowTag:String(e.cow_tag)}));
 }
-function latestEvent(tag) { return eventsForCow(tag)[0] || null; }
-function calvedThisYear(tag) {
-  return events.some(e => e.cowTag === String(tag) && e.year === 2025);
-}
-function hasConcern(tag) {
-  return events.some(e => e.cowTag === String(tag) &&
-    (e.outcome === 'Died' || /died|dead|sell|bad|lost/i.test(e.notes||'')));
-}
-function allYears() {
-  return [...new Set(events.map(e=>e.year))].sort((a,b)=>b-a);
-}
-function fmtDate(d) {
-  if (!d) return null;
-  const dt = new Date(d + 'T12:00:00');
-  return dt.toLocaleDateString('en-US', {month:'short', day:'numeric'});
-}
-function sexLabel(s) {
-  return {B:'Bull', H:'Heifer', Twins:'Twins', Died:'Lost'}[s] || (s||'Unknown');
-}
-function sexEmoji(s) {
-  return {B:'🐂', H:'🐄', Twins:'👥', Died:'✝'}[s] || '❓';
-}
-
-// ── NAV ───────────────────────────────────────────────────────────────
-function showView(name, btn) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+function fallback(){cows=TAGS.map((t,i)=>({id:'c'+i,tag:t,herd:'Pink',added_year:2025}));events=SEVT.map((e,i)=>({...e,id:'s'+i,cowTag:String(e.cow_tag)}));}
+function ec(tag){return events.filter(e=>e.cowTag===String(tag)).sort((a,b)=>b.year-a.year);}
+function cy(tag){return events.some(e=>e.cowTag===String(tag)&&e.year===2025);}
+function hc(tag){return events.some(e=>e.cowTag===String(tag)&&(e.outcome==='Died'||/died|dead|sell|bad|lost/i.test(e.notes||'')));}
+function fd(d){if(!d)return null;return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function sl(s){return{B:'Bull',H:'Heifer',Twins:'Twins',Died:'Lost'}[s]||(s||'Unknown');}
+function se(s){return{B:'&#128002;',H:'&#128004;',Twins:'&#128101;',Died:'&#10013;'}[s]||'?';}
+function sv(name,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
-  if (btn) btn.classList.add('active');
-  document.getElementById('scroll-area').scrollTop = 0;
-  document.getElementById('fab').classList.toggle('hidden', name === 'add');
-  if (name === 'herd')   renderHerd();
-  if (name === 'season') renderSeason();
-  if (name === 'add')    initAddForm();
+  if(btn)btn.classList.add('active');
+  document.getElementById('sa').scrollTop=0;
+  document.getElementById('fab').classList.toggle('hidden',name==='add');
+  if(name==='herd')rh();
+  if(name==='season')rs();
+  if(name==='add'&&!document.getElementById('f-date').value)document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
 }
-
-function showCow(tag) {
-  activeCowTag = tag;
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+function showCow(tag){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-cow').classList.add('active');
-  document.getElementById('scroll-area').scrollTop = 0;
+  document.getElementById('sa').scrollTop=0;
   document.getElementById('fab').classList.add('hidden');
-  renderCowDetail(tag);
+  rcd(tag);
 }
-
-// ── HERD VIEW ─────────────────────────────────────────────────────────
-function setFilter(f, btn) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  renderHerd();
-}
-
-function renderHerd() {
-  const q = document.getElementById('search-input').value.trim().toLowerCase();
-  let filtered = cows.filter(c => {
-    if (q && !c.tag.toLowerCase().includes(q)) return false;
-    if (currentFilter === 'calved')  return calvedThisYear(c.tag);
-    if (currentFilter === 'waiting') return !calvedThisYear(c.tag);
-    if (currentFilter === 'concern') return hasConcern(c.tag);
-    return true;
-  });
-
-  const calved25 = cows.filter(c => calvedThisYear(c.tag)).length;
-  const total = cows.length;
-  const pct = total ? Math.round(calved25/total*100) : 0;
-  document.getElementById('hs-total').textContent = total;
-  document.getElementById('hs-calved').textContent = calved25;
-  document.getElementById('hs-pct').textContent = pct + '%';
-
-  const labels = {all:`All ${total} Cows`, calved:`Calved (${calved25})`,
-    waiting:`Not Yet (${total-calved25})`, concern:'Flagged'};
-  document.getElementById('herd-section-label').textContent = labels[currentFilter] || 'Cows';
-
-  if (!filtered.length) {
-    document.getElementById('cow-list').innerHTML =
-      `<div class="empty"><div class="e-icon">🔍</div><p>No cows found.</p></div>`;
-    return;
-  }
-
-  document.getElementById('cow-list').innerHTML = filtered.map(cow => {
-    const latest = latestEvent(cow.tag);
-    const calved = calvedThisYear(cow.tag);
-    const concern = hasConcern(cow.tag);
-    const allEvts = eventsForCow(cow.tag);
-    const years = [2022,2023,2024,2025].map(y => {
-      const e = events.find(ev => ev.cowTag === cow.tag && ev.year === y);
-      if (!e) return `<span class="year-dot"></span>`;
-      if (e.outcome === 'Died' || e.sex === 'Died') return `<span class="year-dot died" title="${y}: Lost"></span>`;
-      return `<span class="year-dot calved" title="${y}: Calved"></span>`;
-    }).join('');
-    const avatarClass = calved ? '' : 'never';
-    const cardClass = concern ? 'concern' : (calved ? 'has-history' : 'never-calved');
-    const metaText = calved
-      ? `${fmtDate(events.find(e=>e.cowTag===cow.tag&&e.year===2025)?.date) || '2025'} · ${sexLabel(events.find(e=>e.cowTag===cow.tag&&e.year===2025)?.sex)}`
-      : (latest ? `Last: ${latest.year} · ${sexLabel(latest.sex)}` : 'No calving history');
-    return `<div class="cow-card ${cardClass}" onclick="showCow('${cow.tag}')">
-      <div class="cow-avatar ${avatarClass}">${calved ? '🐄' : '⬜'}</div>
-      <div class="cow-info">
-        <div class="cow-tag">${cow.tag}</div>
-        <div class="cow-meta">${metaText}</div>
-      </div>
-      <div class="cow-right">
-        <div class="cow-years">${years}</div>
-        <div class="cow-chevron">›</div>
-      </div>
-    </div>`;
+function sf(f,btn){filt=f;document.querySelectorAll('.fp').forEach(p=>p.classList.remove('active'));btn.classList.add('active');rh();}
+function rh(){
+  const q=document.getElementById('si').value.trim().toLowerCase();
+  let fl=cows.filter(c=>{if(q&&!c.tag.toLowerCase().includes(q))return false;if(filt==='calved')return cy(c.tag);if(filt==='waiting')return!cy(c.tag);if(filt==='concern')return hc(c.tag);return true;});
+  const c25=cows.filter(c=>cy(c.tag)).length,tot=cows.length,pct=tot?Math.round(c25/tot*100):0;
+  document.getElementById('hs-t').textContent=tot;
+  document.getElementById('hs-c').textContent=c25;
+  document.getElementById('hs-p').textContent=pct+'%';
+  const labs={all:'All '+tot+' Cows',calved:'Calved ('+c25+')',waiting:'Not Yet ('+(tot-c25)+')',concern:'Flagged'};
+  document.getElementById('sl').textContent=labs[filt]||'Cows';
+  if(!fl.length){document.getElementById('cl').innerHTML='<div class="empty"><div class="ei">&#128269;</div><p>No cows found.</p></div>';return;}
+  document.getElementById('cl').innerHTML=fl.map(cow=>{
+    const calved=cy(cow.tag),concern=hc(cow.tag),ev25=events.find(e=>e.cowTag===cow.tag&&e.year===2025),latest=ec(cow.tag)[0];
+    const yrs=[2022,2023,2024,2025].map(y=>{const e=events.find(ev=>ev.cowTag===cow.tag&&ev.year===y);if(!e)return'<span class="yd"></span>';if(e.outcome==='Died'||e.sex==='Died')return'<span class="yd d"></span>';return'<span class="yd c"></span>';}).join('');
+    const meta=calved?(fd(ev25?.date)||'2025')+' &middot; '+sl(ev25?.sex):(latest?'Last: '+latest.year+' &middot; '+sl(latest.sex):'No calving history');
+    return'<div class="cow-card '+(concern?'concern':calved?'hh':'nc')+'" onclick="showCow(\''+cow.tag+'\')"><div class="cow-av '+(calved?'':'nv')+'">'+(calved?'&#128004;':'&#9724;')+'</div><div class="cow-info"><div class="cow-tag-label">'+cow.tag+'</div><div class="cow-meta">'+meta+'</div></div><div class="cow-right"><div class="cow-years">'+yrs+'</div><div class="cow-chev">&#8250;</div></div></div>';
   }).join('');
 }
-
-// ── COW DETAIL ────────────────────────────────────────────────────────
-function renderCowDetail(tag) {
-  const cow = cows.find(c => c.tag === tag);
-  if (!cow) return;
-  const evts = eventsForCow(tag);
-  const totalCalves = evts.filter(e=>e.sex && e.sex!=='Died').length;
-  const lived = evts.filter(e=>e.outcome==='Alive').length;
-  const concern = hasConcern(tag);
-
-  // Header
-  document.getElementById('cow-detail-header').innerHTML = `
-    <button class="back-btn" onclick="showView('herd', document.querySelector('.nav-tab'))">‹ Back to Herd</button>
-    <div class="detail-tag">Cow ${tag}</div>
-    <div><span class="detail-badge">🩷 Pink Herd</span>${concern ? ' <span class="detail-badge" style="background:var(--red)">⚠ Flagged</span>' : ''}</div>
-    <div class="detail-lifetime">
-      <div class="lifetime-stat"><div class="ls-num">${evts.length}</div><div class="ls-lbl">Seasons</div></div>
-      <div class="lifetime-stat"><div class="ls-num">${totalCalves}</div><div class="ls-lbl">Calves</div></div>
-      <div class="lifetime-stat"><div class="ls-num">${lived}</div><div class="ls-lbl">Survived</div></div>
-    </div>`;
-
-  // Timeline
-  const years = [2025,2024,2023,2022];
-  let html = `<div class="timeline-title">Calving History</div>`;
-
-  years.forEach(yr => {
-    const e = events.find(ev => ev.cowTag === tag && ev.year === yr);
-    const isCurrent = yr === 2025;
-    if (!e && !isCurrent) return; // skip blank past years
-    const died = e?.outcome === 'Died' || e?.sex === 'Died';
-    const dotClass = !e ? 'no-calf' : (died ? 'died' : 'calved');
-    const dotIcon = !e ? '○' : (died ? '✝' : sexEmoji(e.sex));
-    const bodyClass = died ? 'died-event' : '';
-    let calfText = !e ? 'No record yet' : (died ? 'Calf Lost' : `${sexLabel(e.sex)} Calf`);
-    let detail = !e ? (isCurrent ? 'Waiting to calve' : '') : (e.date ? fmtDate(e.date) : 'Date not recorded');
-    let noteHtml = (e?.notes) ? `<div class="tl-note">"${e.notes}"</div>` : '';
-    html += `
-      <div class="timeline-item">
-        <div class="tl-dot ${dotClass}">${dotIcon}</div>
-        <div class="tl-body ${bodyClass}">
-          <div class="tl-year">${yr}${isCurrent ? ' · Current Season' : ''}</div>
-          <div class="tl-calf">${calfText}</div>
-          ${detail ? `<div class="tl-detail">${detail}</div>` : ''}
-          ${noteHtml}
-        </div>
-      </div>`;
+function rcd(tag){
+  const evts=ec(tag),tc=evts.filter(e=>e.sex&&e.sex!=='Died').length,lv=evts.filter(e=>e.outcome==='Alive').length;
+  document.getElementById('cdh').innerHTML='<button class="back-btn" onclick="sv(\'herd\',document.querySelector(\'.nav-tab\'))">&#8249; Back to Herd</button><div class="detail-tag">Cow '+tag+'</div><div><span class="detail-badge">&#129145; Pink Herd</span>'+(hc(tag)?' <span class="detail-badge" style="background:var(--red)">&#9888; Flagged</span>':'')+'</div><div class="detail-lifetime"><div><div class="ls-num">'+evts.length+'</div><div class="ls-lbl">Seasons</div></div><div><div class="ls-num">'+tc+'</div><div class="ls-lbl">Calves</div></div><div><div class="ls-num">'+lv+'</div><div class="ls-lbl">Survived</div></div></div>';
+  let html='<div class="tl-title">Calving History</div>';
+  [2025,2024,2023,2022].forEach(yr=>{
+    const e=events.find(ev=>ev.cowTag===tag&&ev.year===yr);
+    if(!e&&yr!==2025)return;
+    const died=e?.outcome==='Died'||e?.sex==='Died';
+    html+='<div class="tl-item"><div class="tl-dot '+(!e?'noc':died?'die':'cal')+'">'+(!e?'&#9675;':died?'&#10013;':se(e?.sex))+'</div><div class="tl-body '+(died?'de':'')+'"><div class="tl-yr">'+yr+(yr===2025?' &middot; Current Season':'')+'</div><div class="tl-calf">'+(!e?'No record yet':died?'Calf Lost':sl(e.sex)+' Calf')+'</div>'+(!e&&yr===2025?'<div class="tl-detail">Waiting to calve</div>':e?.date?'<div class="tl-detail">'+fd(e.date)+'</div>':'')+(e?.notes?'<div class="tl-note">&ldquo;'+e.notes+'&rdquo;</div>':'')+'</div></div>';
   });
-
-  // Add entry button for current year if not yet done
-  if (!events.find(e => e.cowTag === tag && e.year === 2025)) {
-    html += `<button class="add-year-btn" onclick="prefillAdd('${tag}')">+ Record 2025 calf for Cow ${tag}</button>`;
-  }
-
-  document.getElementById('cow-timeline').innerHTML = html;
+  if(!events.find(e=>e.cowTag===tag&&e.year===2025))html+='<button class="add-yr-btn" onclick="prefill(\''+tag+'\')">+ Record 2025 calf for Cow '+tag+'</button>';
+  document.getElementById('ctl').innerHTML=html;
 }
-
-function prefillAdd(tag) {
-  document.getElementById('f-tag').value = tag;
-  showView('add', document.querySelector('.nav-tab:nth-child(3)'));
-}
-
-// ── SEASON VIEW ───────────────────────────────────────────────────────
-function renderSeason() {
-  const years = [2025, 2024, 2023, 2022];
-  let html = '';
-  years.forEach(yr => {
-    const yEvts = events.filter(e => e.year === yr);
-    if (!yEvts.length && yr !== 2025) return;
-    const calved = yEvts.filter(e=>e.date).length;
-    const bulls   = yEvts.filter(e=>e.sex==='B').length;
-    const heifers = yEvts.filter(e=>e.sex==='H').length;
-    const twins   = yEvts.filter(e=>e.sex==='Twins').length;
-    const died    = yEvts.filter(e=>e.outcome==='Died'||e.sex==='Died').length;
-    const total   = cows.length;
-    const pct     = total ? Math.round(calved/total*100) : 0;
-
-    html += `<div class="season-card">
-      <div class="season-year">
-        <span class="yr-num">${yr} Season</span>
-        <span class="yr-total">${calved} calved</span>
-      </div>
-      <div class="season-stats">
-        <div class="ss-box bulls"><div class="ss-num">${bulls}</div><div class="ss-lbl">Bulls</div></div>
-        <div class="ss-box heifers"><div class="ss-num">${heifers}</div><div class="ss-lbl">Heifers</div></div>
-        <div class="ss-box twins"><div class="ss-num">${twins}</div><div class="ss-lbl">Twins</div></div>
-        <div class="ss-box died"><div class="ss-num">${died||'—'}</div><div class="ss-lbl">Lost</div></div>
-      </div>
-      ${yr === 2025 ? `
-      <div class="progress-bar-wrap">
-        <div class="pb-label"><span>Season Progress</span><span>${pct}%</span></div>
-        <div class="pb-track"><div class="pb-fill" style="width:${pct}%"></div></div>
-      </div>` : ''}
-    </div>`;
+function prefill(tag){document.getElementById('f-tag').value=tag;sv('add',document.querySelector('.nav-tab:nth-child(3)'));}
+function rs(){
+  let html='';
+  [2025,2024,2023,2022].forEach(yr=>{
+    const ye=events.filter(e=>e.year===yr);if(!ye.length&&yr!==2025)return;
+    const cal=ye.filter(e=>e.date).length,bu=ye.filter(e=>e.sex==='B').length,he=ye.filter(e=>e.sex==='H').length,tw=ye.filter(e=>e.sex==='Twins').length,di=ye.filter(e=>e.outcome==='Died'||e.sex==='Died').length,pct=cows.length?Math.round(cal/cows.length*100):0;
+    html+='<div class="season-card"><div class="sy"><span class="sy-num">'+yr+' Season</span><span class="sy-tot">'+cal+' calved</span></div><div class="ss"><div class="ss-box bu"><div class="ss-n">'+bu+'</div><div class="ss-l">Bulls</div></div><div class="ss-box he"><div class="ss-n">'+he+'</div><div class="ss-l">Heifers</div></div><div class="ss-box tw"><div class="ss-n">'+tw+'</div><div class="ss-l">Twins</div></div><div class="ss-box di"><div class="ss-n">'+(di||'&mdash;')+'</div><div class="ss-l">Lost</div></div></div>'+(yr===2025?'<div class="pb-wrap"><div class="pb-lbl"><span>Season Progress</span><span>'+pct+'%</span></div><div class="pb-track"><div class="pb-fill" style="width:'+pct+'%"></div></div></div>':'')+'</div>';
   });
-  document.getElementById('season-content').innerHTML = html ||
-    '<div class="empty"><div class="e-icon">📅</div><p>No season data yet.</p></div>';
+  document.getElementById('sc2').innerHTML=html||'<div class="empty"><div class="ei">&#128197;</div><p>No season data yet.</p></div>';
 }
-
-// ── ADD CALF FORM ─────────────────────────────────────────────────────
-function initAddForm() {
-  const today = new Date().toISOString().split('T')[0];
-  if (!document.getElementById('f-date').value)
-    document.getElementById('f-date').value = today;
+function ss(s){selSex=s;['b','h','t','d'].forEach(id=>document.getElementById('bt-'+id).className='bt');const m={B:'b',H:'h',Twins:'t',Died:'d'};if(m[s])document.getElementById('bt-'+m[s]).classList.add('s'+m[s]);}
+async function submitCalf(){
+  const tag=document.getElementById('f-tag').value.trim(),date=document.getElementById('f-date').value,notes=document.getElementById('f-notes').value.trim();
+  if(!tag){document.getElementById('f-tag').style.borderColor='var(--red)';setTimeout(()=>document.getElementById('f-tag').style.borderColor='',1500);toast('Enter a cow tag number',true);return;}
+  const btn=document.getElementById('sub-btn');btn.disabled=true;btn.textContent='Saving\u2026';
+  try{
+    if(!cows.find(c=>c.tag===tag)){const nc={id:'c'+Date.now(),tag,herd:'Pink',added_year:2025,notes:null};await db('cows','POST',[nc]);cows.push(nc);}
+    const ev={id:'e'+Date.now(),cow_tag:tag,year:2025,sex:selSex,date:date||null,notes:notes||null,outcome:selSex==='Died'?'Died':(selSex?'Alive':null)};
+    await db('events','POST',[ev]);events.push({...ev,cowTag:tag});sync('ok');
+    document.getElementById('f-tag').value='';document.getElementById('f-notes').value='';selSex=null;['b','h','t','d'].forEach(id=>document.getElementById('bt-'+id).className='bt');
+    toast('\u2713 Saved \u2014 Cow '+tag);setTimeout(()=>sv('herd',document.querySelector('.nav-tab')),800);
+  }catch(e){sync('error');toast('Save failed \u2014 check connection',true);}
+  btn.disabled=false;btn.textContent='Save Calf \u2192';
 }
-
-function selSex(s) {
-  selectedSex = s;
-  ['bull','heifer','twins','died'].forEach(id => {
-    document.getElementById('bt-'+id).className = 'big-toggle';
-  });
-  const map = {B:'bull', H:'heifer', Twins:'twins', Died:'died'};
-  if (map[s]) document.getElementById('bt-'+map[s]).classList.add('sel-'+map[s]);
+function openSheet(){document.getElementById('add-sheet').classList.add('open');}
+function closeSheet(){document.getElementById('add-sheet').classList.remove('open');}
+function maybeClose(e){if(e.target===e.currentTarget)closeSheet();}
+async function addCow(){
+  const tag=document.getElementById('new-tag').value.trim();
+  if(!tag){toast('Enter a tag number',true);return;}
+  if(cows.find(c=>c.tag===tag)){toast('Cow '+tag+' already in herd',true);return;}
+  try{const c={id:'c'+Date.now(),tag,herd:'Pink',added_year:2025,notes:document.getElementById('new-notes').value.trim()||null};await db('cows','POST',[c]);cows.push(c);document.getElementById('new-tag').value='';document.getElementById('new-notes').value='';closeSheet();toast('Cow '+tag+' added');rh();}catch(e){toast('Could not add cow',true);}
 }
-
-function submitCalf() {
-  const tag   = document.getElementById('f-tag').value.trim();
-  const date  = document.getElementById('f-date').value;
-  const notes = document.getElementById('f-notes').value.trim();
-
-  if (!tag) { shake('f-tag'); toast('Enter a cow tag number', true); return; }
-
-  // Auto-add cow if not in herd
-  if (!cows.find(c => c.tag === tag)) {
-    cows.push({id:'c'+Date.now(), tag, herd:'Pink', addedYear:2025, notes:null});
-  }
-
-  const evt = {
-    id: 'e'+Date.now(),
-    cowTag: tag, year: 2025,
-    sex: selectedSex,
-    date: date || null,
-    notes: notes || null,
-    outcome: selectedSex === 'Died' ? 'Died' : (selectedSex ? 'Alive' : null)
-  };
-  events.push(evt);
-  save();
-
-  // Reset form
-  document.getElementById('f-tag').value = '';
-  document.getElementById('f-notes').value = '';
-  selectedSex = null;
-  ['bull','heifer','twins','died'].forEach(id => document.getElementById('bt-'+id).className='big-toggle');
-
-  toast(`✓ Saved — Cow ${tag}`);
-  setTimeout(() => showView('herd', document.querySelector('.nav-tab')), 800);
-}
-
-// ── ADD COW SHEET ─────────────────────────────────────────────────────
-function openAddCow() { document.getElementById('add-cow-sheet').classList.add('open'); }
-function closeAddCow() { document.getElementById('add-cow-sheet').classList.remove('open'); }
-function maybeCloseSheet(e) { if (e.target === e.currentTarget) closeAddCow(); }
-function addCow() {
-  const tag = document.getElementById('new-tag').value.trim();
-  if (!tag) { toast('Enter a tag number', true); return; }
-  if (cows.find(c => c.tag === tag)) { toast('Cow '+tag+' already in herd', true); return; }
-  cows.push({id:'c'+Date.now(), tag, herd:'Pink', addedYear:2025, notes: document.getElementById('new-notes').value.trim()||null});
-  save();
-  document.getElementById('new-tag').value = '';
-  document.getElementById('new-notes').value = '';
-  closeAddCow();
-  toast('🐄 Cow '+tag+' added to herd');
-  renderHerd();
-}
-
-// ── UTILS ─────────────────────────────────────────────────────────────
-function shake(id) {
-  const el = document.getElementById(id);
-  el.style.borderColor = 'var(--red)';
-  setTimeout(() => el.style.borderColor = '', 1500);
-}
-function toast(msg, err=false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (err?' err':'');
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2400);
-}
-
-// ── INIT ──────────────────────────────────────────────────────────────
-load();
-renderHerd();
-
-// PWA install
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
+function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(err?' err':'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+document.getElementById('loading').classList.add('hidden');
+if(sessionStorage.getItem(PSK)==='1'){document.getElementById('pin-screen').classList.add('hidden');init();}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>
