@@ -113,6 +113,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--cream);color:var(--ink);d
 .add-yr-btn:active{border-color:var(--pink);color:var(--pink);background:var(--pink-l)}
 .tl-delete{position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(28,18,8,0.2);font-size:0.9rem;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all 0.15s}
 .tl-delete:active{color:var(--red);background:var(--red-l)}
+.tl-edit{position:absolute;top:10px;right:46px;background:none;border:none;color:rgba(28,18,8,0.2);font-size:0.9rem;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all 0.15s}
+.tl-edit:active{color:var(--gold);background:var(--gold-l)}
+.sync-time{font-size:0.68rem;color:rgba(248,243,236,0.4);letter-spacing:0.5px;white-space:nowrap}
 .tl-body{position:relative}
 .remove-cow-btn{display:block;width:calc(100% - 32px);margin:0 16px 20px;padding:12px;background:none;border:1.5px solid var(--red);border-radius:12px;color:var(--red);font-family:"DM Sans",sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s}
 .remove-cow-btn:active{background:var(--red-l)}
@@ -200,7 +203,7 @@ textarea{min-height:80px;resize:none;line-height:1.5}
 <div class="status-bar"></div>
 <div class="topbar">
   <div><div class="topbar-title">Cattle<span>Book</span></div><div class="topbar-sub">Brandon &middot; Pink Herd &middot; 2025</div></div>
-  <div class="topbar-right"><div class="sync-dot" id="sync-dot"></div><button class="icon-btn" onclick="openSheet()">&#65291;</button></div>
+  <div class="topbar-right"><div class="sync-dot" id="sync-dot"></div><span class="sync-time" id="sync-time"></span><button class="icon-btn" onclick="openSheet()">&#65291;</button></div>
 </div>
 <div class="nav-tabs">
   <button class="nav-tab active" onclick="sv('herd',this)"><span class="ti">&#128004;</span>Herd</button>
@@ -258,11 +261,31 @@ textarea{min-height:80px;resize:none;line-height:1.5}
     </div>
   </div>
 </div>
+<div class="sov" id="edit-sheet" onclick="maybeCloseEdit(event)">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="shdr"><div class="shtl" id="edit-sheet-title">Edit Record</div><button class="shcl" onclick="closeEditSheet()">&#10005;</button></div>
+    <div class="fw" style="padding-top:16px">
+      <div class="field"><label>Calving Date</label><input type="date" id="ed-date"></div>
+      <div class="field">
+        <label>Calf Sex</label>
+        <div class="bts">
+          <button class="bt" id="ebt-b" onclick="ess('B')"><span class="bti">&#128002;</span><span class="btl">Bull</span></button>
+          <button class="bt" id="ebt-h" onclick="ess('H')"><span class="bti">&#128004;</span><span class="btl">Heifer</span></button>
+          <button class="bt" id="ebt-t" onclick="ess('Twins')"><span class="bti">&#128101;</span><span class="btl">Twins</span></button>
+          <button class="bt" id="ebt-d" onclick="ess('Died')"><span class="bti">&#10013;</span><span class="btl">Lost</span></button>
+        </div>
+      </div>
+      <div class="field"><label>Notes <span class="hint">&#8212; optional</span></label><textarea id="ed-notes" placeholder="e.g. red calf, needed help&#8230;"></textarea></div>
+      <button class="btn-sub" id="edit-sub-btn" onclick="saveEdit()">Save Changes &#8594;</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 <script>
-const SB_URL='https://mzhpdvdxmkeihegzifkw.supabase.co';
-const SB_KEY='sb_publishable_ztZnm2MxAVlzXTzuxcux9Q_N9Sh9WzB';
-const PIN='1234';
+const SB_URL='__SB_URL__';
+const SB_KEY='__SB_KEY__';
+const PIN='__APP_PIN__';
 const PSK='cb_pin_ok';
 async function db(path,method,body){
   const h={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
@@ -280,7 +303,7 @@ function pp(d){if(pin.length>=4)return;pin+=d;upd();if(pin.length===4)chk();}
 function pd(){pin=pin.slice(0,-1);upd();document.getElementById('pin-error').textContent='';}
 function upd(s){for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.className='pin-dot';if(s)d.classList.add(s);else if(i<pin.length)d.classList.add('filled');}}
 function chk(){if(pin===PIN){sessionStorage.setItem(PSK,'1');document.getElementById('pin-screen').classList.add('hidden');init();}else{upd('error');document.getElementById('pin-error').textContent='Wrong PIN — try again';setTimeout(()=>{pin='';upd();document.getElementById('pin-error').textContent='';},1000);}}
-function sync(s){document.getElementById('sync-dot').className='sync-dot'+(s==='syncing'?' syncing':s==='error'?' error':'');}
+function sync(s){document.getElementById('sync-dot').className='sync-dot'+(s==='syncing'?' syncing':s==='error'?' error':'');if(s==='ok'){const t=new Date();document.getElementById('sync-time').textContent=t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}}
 async function init(){
   document.getElementById('loading').classList.remove('hidden');sync('syncing');
   try{
@@ -349,7 +372,8 @@ function rcd(tag){
     if(!e&&yr!==2025)return;
     const died=e?.outcome==='Died'||e?.sex==='Died';
     const delBtn=e?'<button class="tl-delete" onclick="delEvent(\''+e.id+'\',\''+tag+'\')">&#10005;</button>':'';
-    html+='<div class="tl-item"><div class="tl-dot '+(!e?'noc':died?'die':'cal')+'">'+(!e?'&#9675;':died?'&#10013;':se(e?.sex))+'</div><div class="tl-body '+(died?'de':'')+'">'+delBtn+'<div class="tl-yr">'+yr+(yr===2025?' &middot; Current Season':'')+'</div><div class="tl-calf">'+(!e?'No record yet':died?'Calf Lost':sl(e.sex)+' Calf')+'</div>'+(!e&&yr===2025?'<div class="tl-detail">Waiting to calve</div>':e?.date?'<div class="tl-detail">'+fd(e.date)+'</div>':'')+(e?.notes?'<div class="tl-note">&ldquo;'+e.notes+'&rdquo;</div>':'')+'</div></div>';
+    const editBtn=e?'<button class="tl-edit" onclick="openEditSheet(\''+e.id+'\',\''+tag+'\')">&#9998;</button>':'';
+    html+='<div class="tl-item"><div class="tl-dot '+(!e?'noc':died?'die':'cal')+'">'+(!e?'&#9675;':died?'&#10013;':se(e?.sex))+'</div><div class="tl-body '+(died?'de':'')+'">'+delBtn+editBtn+'<div class="tl-yr">'+yr+(yr===2025?' &middot; Current Season':'')+'</div><div class="tl-calf">'+(!e?'No record yet':died?'Calf Lost':sl(e.sex)+' Calf')+'</div>'+(!e&&yr===2025?'<div class="tl-detail">Waiting to calve</div>':e?.date?'<div class="tl-detail">'+fd(e.date)+'</div>':'')+(e?.notes?'<div class="tl-note">&ldquo;'+e.notes+'&rdquo;</div>':'')+'</div></div>';
   });
   if(!events.find(e=>e.cowTag===tag&&e.year===2025))html+='<button class="add-yr-btn" onclick="prefill(\''+tag+'\')">+ Record 2025 calf for Cow '+tag+'</button>';
   html+='<button class="remove-cow-btn" onclick="removeCow(\''+tag+'\')">Remove Cow '+tag+' from Herd</button>';
@@ -407,6 +431,34 @@ async function removeCow(tag){
     toast('Cow '+tag+' removed');
     sv('herd',document.querySelector('.nav-tab'));
   }catch(e){toast('Could not remove cow',true);}
+}
+let editEvt=null,editSex=null;
+function openEditSheet(id,tag){
+  editEvt=events.find(e=>e.id===id);if(!editEvt)return;
+  editSex=editEvt.sex;
+  document.getElementById('edit-sheet-title').textContent='Edit \u2014 Cow '+tag;
+  document.getElementById('ed-date').value=editEvt.date||'';
+  document.getElementById('ed-notes').value=editEvt.notes||'';
+  ['b','h','t','d'].forEach(i=>document.getElementById('ebt-'+i).className='bt');
+  const m={B:'b',H:'h',Twins:'t',Died:'d'};if(editSex&&m[editSex])document.getElementById('ebt-'+m[editSex]).classList.add('s'+m[editSex]);
+  document.getElementById('edit-sheet').classList.add('open');
+}
+function closeEditSheet(){document.getElementById('edit-sheet').classList.remove('open');editEvt=null;editSex=null;}
+function maybeCloseEdit(e){if(e.target===e.currentTarget)closeEditSheet();}
+function ess(s){editSex=s;['b','h','t','d'].forEach(i=>document.getElementById('ebt-'+i).className='bt');const m={B:'b',H:'h',Twins:'t',Died:'d'};if(m[s])document.getElementById('ebt-'+m[s]).classList.add('s'+m[s]);}
+async function saveEdit(){
+  if(!editEvt)return;
+  const date=document.getElementById('ed-date').value,notes=document.getElementById('ed-notes').value.trim();
+  const btn=document.getElementById('edit-sub-btn');btn.disabled=true;btn.textContent='Saving\u2026';
+  try{
+    const upd={sex:editSex,date:date||null,notes:notes||null,outcome:editSex==='Died'?'Died':(editSex?'Alive':null)};
+    await db('events?id=eq.'+editEvt.id,'PATCH',upd);
+    const idx=events.findIndex(e=>e.id===editEvt.id);
+    if(idx>=0)events[idx]={...events[idx],...upd};
+    const tag=String(editEvt.cow_tag||editEvt.cowTag);
+    closeEditSheet();toast('\u2713 Updated \u2014 Cow '+tag);rcd(tag);
+  }catch(e){toast('Could not save \u2014 check connection',true);}
+  btn.disabled=false;btn.textContent='Save Changes \u2192';
 }
 function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(err?' err':'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 document.getElementById('loading').classList.add('hidden');
