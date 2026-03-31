@@ -479,34 +479,6 @@ async function saveEdit(){
   }catch(e){toast('Could not save \u2014 check connection',true);}
   btn.disabled=false;btn.textContent='Save Changes \u2192';
 }
-let editEvt=null,editSex=null;
-function openEditSheet(id,tag){
-  editEvt=events.find(e=>e.id===id);if(!editEvt)return;
-  editSex=editEvt.sex;
-  document.getElementById('edit-sheet-title').textContent='Edit \u2014 Cow '+tag;
-  document.getElementById('ed-date').value=editEvt.date||'';
-  document.getElementById('ed-notes').value=editEvt.notes||'';
-  ['b','h','t','d'].forEach(i=>document.getElementById('ebt-'+i).className='bt');
-  const m={B:'b',H:'h',Twins:'t',Died:'d'};if(editSex&&m[editSex])document.getElementById('ebt-'+m[editSex]).classList.add('s'+m[editSex]);
-  document.getElementById('edit-sheet').classList.add('open');
-}
-function closeEditSheet(){document.getElementById('edit-sheet').classList.remove('open');editEvt=null;editSex=null;}
-function maybeCloseEdit(e){if(e.target===e.currentTarget)closeEditSheet();}
-function ess(s){editSex=s;['b','h','t','d'].forEach(i=>document.getElementById('ebt-'+i).className='bt');const m={B:'b',H:'h',Twins:'t',Died:'d'};if(m[s])document.getElementById('ebt-'+m[s]).classList.add('s'+m[s]);}
-async function saveEdit(){
-  if(!editEvt)return;
-  const date=document.getElementById('ed-date').value,notes=document.getElementById('ed-notes').value.trim();
-  const btn=document.getElementById('edit-sub-btn');btn.disabled=true;btn.textContent='Saving\u2026';
-  try{
-    const upd={sex:editSex,date:date||null,notes:notes||null,outcome:editSex==='Died'?'Died':(editSex?'Alive':null)};
-    await db('events?id=eq.'+editEvt.id,'PATCH',upd);
-    const idx=events.findIndex(e=>e.id===editEvt.id);
-    if(idx>=0)events[idx]={...events[idx],...upd};
-    const tag=String(editEvt.cow_tag||editEvt.cowTag);
-    closeEditSheet();toast('\u2713 Updated \u2014 Cow '+tag);rcd(tag);
-  }catch(e){toast('Could not save \u2014 check connection',true);}
-  btn.disabled=false;btn.textContent='Save Changes \u2192';
-}
 function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(err?' err':'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 document.getElementById('loading').classList.add('hidden');
 if(sessionStorage.getItem(PSK)==='1'){document.getElementById('pin-screen').classList.add('hidden');init();}
