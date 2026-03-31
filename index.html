@@ -283,9 +283,9 @@ textarea{min-height:80px;resize:none;line-height:1.5}
 </div>
 <div class="toast" id="toast"></div>
 <script>
-const SB_URL='https://mzhpdvdxmkeihegzifkw.supabase.co';
-const SB_KEY='sb_publishable_ztZnm2MxAVlzXTzuxcux9Q_N9Sh9WzB';
-const PIN='1234';
+const SB_URL='__SB_URL__';
+const SB_KEY='__SB_KEY__';
+const PIN='__APP_PIN__';
 const PSK='cb_pin_ok';
 async function db(path,method,body){
   const h={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
