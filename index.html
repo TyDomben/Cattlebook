@@ -118,6 +118,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--cream);color:var(--ink);d
 .tl-edit{position:absolute;top:10px;right:46px;background:none;border:none;color:rgba(28,18,8,0.2);font-size:0.9rem;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all 0.15s}
 .tl-edit:active{color:var(--gold);background:var(--gold-l)}
 .sync-time{font-size:0.68rem;color:rgba(248,243,236,0.4);letter-spacing:0.5px;white-space:nowrap}
+.herd-switcher{display:flex;gap:6px;margin-top:3px}
+.hp{border:none;border-radius:99px;padding:3px 11px;font-size:0.7rem;font-weight:600;cursor:pointer;letter-spacing:0.5px;transition:all 0.15s;color:rgba(248,243,236,0.4);background:rgba(255,255,255,0.08)}
+.hp.active{color:white}
+.hp.pk.active{background:var(--pink)}
+.hp.bl.active{background:#3A6B8A}
 .tl-body{position:relative}
 .remove-cow-btn{display:block;width:calc(100% - 32px);margin:0 16px 20px;padding:12px;background:none;border:1.5px solid var(--red);border-radius:12px;color:var(--red);font-family:"DM Sans",sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s}
 .remove-cow-btn:active{background:var(--red-l)}
@@ -190,7 +195,7 @@ textarea{min-height:80px;resize:none;line-height:1.5}
 <div class="loverlay" id="loading"><div class="llogo">Cattle<span>Book</span></div><div class="lspinner"></div><div class="ltxt">Loading herd…</div></div>
 <div class="pin-screen" id="pin-screen">
   <div class="pin-logo">Cattle<span>Book</span></div>
-  <div class="pin-tagline">Brandon · Pink Herd · 2025</div>
+  <div class="pin-tagline">Spring Calving · 2025</div>
   <div class="pin-label">Enter PIN to continue</div>
   <div class="pin-dots" id="pin-dots">
     <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
@@ -206,7 +211,7 @@ textarea{min-height:80px;resize:none;line-height:1.5}
 </div>
 <div class="status-bar"></div>
 <div class="topbar">
-  <div><div class="topbar-title">Cattle<span>Book</span></div><div class="topbar-sub">Brandon &middot; Pink Herd &middot; 2025</div></div>
+  <div><div class="topbar-title">Cattle<span>Book</span></div><div class="herd-switcher"><button class="hp pk" id="hp-Pink" onclick="switchHerd('Pink')">Brandon &middot; Pink</button><button class="hp bl" id="hp-Blue" onclick="switchHerd('Blue')">Brad &middot; Blue</button></div></div>
   <div class="topbar-right"><div class="sync-dot" id="sync-dot"></div><span class="sync-time" id="sync-time"></span><button class="icon-btn" onclick="openSheet()">&#65291;</button></div>
 </div>
 <div class="nav-tabs">
@@ -300,8 +305,10 @@ async function db(path,method,body){
   return r.json();
 }
 const TAGS=['2','3','4','5','7','8','24','29','30','41','42','43','44','46','47','48','49','50','51','52','55','66','102','104','106','107','108','111','112','114','115','116','117','210','224','250','251','252','253','254','255','256','257','258','259','307','360','361','362','363','364','365','366','367','368','369','418','420','422','423','425','427','432','433','437','438','504','507','508','514','521','522','666','667','671','672','674','711','713','715','751','752','756','757','758','762','764','831','842','884','887','898','941','942','943','944','6108'];
+const TAGS_BLUE=['b1','b2','b3','b4','b292','b301','b304','b305','b306','b307','b308','b309','b312','b313','b314','b315','b316','b317','b318','b319','b325','b326','b329','b330','b331','b332','b350','b351','b352','b354','b355','b356','b357','b594','b773','b776','b779','bOlivia'];
 const SEVT=[{cow_tag:'2',year:2024,sex:'H',date:'2024-03-29',notes:null,outcome:'Alive'},{cow_tag:'3',year:2024,sex:'B',date:'2024-04-27',notes:null,outcome:'Alive'},{cow_tag:'4',year:2024,sex:'H',date:'2024-03-24',notes:'Picked up',outcome:'Alive'},{cow_tag:'5',year:2024,sex:'B',date:'2024-04-07',notes:null,outcome:'Alive'},{cow_tag:'29',year:2024,sex:'B',date:'2024-04-04',notes:null,outcome:'Alive'},{cow_tag:'30',year:2024,sex:'Twins',date:'2024-03-30',notes:'Twins - Sold one',outcome:'Alive'},{cow_tag:'55',year:2024,sex:'B',date:'2024-04-03',notes:'born up north',outcome:'Alive'},{cow_tag:'66',year:2024,sex:'B',date:'2024-03-29',notes:null,outcome:'Alive'},{cow_tag:'102',year:2024,sex:'H',date:'2024-03-30',notes:null,outcome:'Alive'},{cow_tag:'751',year:2024,sex:'B',date:'2024-04-05',notes:'red calf',outcome:'Alive'},{cow_tag:'756',year:2024,sex:'H',date:'2024-04-13',notes:'red',outcome:'Alive'},{cow_tag:'758',year:2024,sex:'H',date:'2024-03-29',notes:null,outcome:'Alive'},{cow_tag:'762',year:2024,sex:'H',date:'2024-03-30',notes:null,outcome:'Alive'},{cow_tag:'887',year:2024,sex:'B',date:'2024-03-31',notes:null,outcome:'Alive'},{cow_tag:'6108',year:2024,sex:'B',date:'2024-03-25',notes:null,outcome:'Alive'},{cow_tag:'55',year:2022,sex:'B',date:'2022-03-28',notes:null,outcome:'Alive'},{cow_tag:'102',year:2022,sex:'H',date:'2022-04-01',notes:null,outcome:'Alive'},{cow_tag:'751',year:2022,sex:'H',date:'2022-03-22',notes:null,outcome:'Alive'},{cow_tag:'762',year:2022,sex:'B',date:'2022-03-30',notes:null,outcome:'Alive'},{cow_tag:'758',year:2022,sex:'H',date:'2022-03-25',notes:null,outcome:'Died'},{cow_tag:'30',year:2022,sex:'Twins',date:'2022-04-01',notes:'Both bulls',outcome:'Alive'}];
 let cows=[],events=[],filt='all',selSex=null;
+let currentHerd=localStorage.getItem('cb_herd')||'Pink';
 let pin='';
 function pp(d){if(pin.length>=4)return;pin+=d;upd();if(pin.length===4)chk();}
 function pd(){pin=pin.slice(0,-1);upd();document.getElementById('pin-error').textContent='';}
@@ -314,9 +321,11 @@ async function init(){
   try{
     const[dc,de]=await Promise.all([db('cows?select=*&order=tag'),db('events?select=*&order=year.desc')]);
     if(dc.length===0){await seed();}else{cows=dc.map(c=>({...c,tag:String(c.tag)}));events=de.map(e=>({...e,cowTag:String(e.cow_tag)}));}
-    sync('ok');populateTaglist();
-  }catch(e){sync('error');toast('Offline mode',true);fallback();populateTaglist();}
-  document.getElementById('loading').classList.add('hidden');rh();
+    if(!cows.find(c=>c.herd==='Blue')){await seedBlue();}
+    sync('ok');
+  }catch(e){sync('error');toast('Offline mode',true);fallback();}
+  document.getElementById('loading').classList.add('hidden');
+  switchHerd(currentHerd);
 }
 async function seed(){
   await db('cows','POST',TAGS.map((t,i)=>({id:'c'+i,tag:t,herd:'Pink',added_year:2025,notes:null})));
@@ -331,6 +340,23 @@ function hc(tag){return events.some(e=>e.cowTag===String(tag)&&(e.outcome==='Die
 function fd(d){if(!d)return null;return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function sl(s){return{B:'Bull',H:'Heifer',Twins:'Twins',Died:'Lost'}[s]||(s||'Unknown');}
 function se(s){return{B:'&#128002;',H:'&#128004;',Twins:'&#128101;',Died:'&#10013;'}[s]||'?';}
+function dt(t){return(currentHerd==='Blue'&&String(t).startsWith('b'))?String(t).slice(1):String(t);}
+function herdTags(){return new Set(cows.filter(c=>c.herd===currentHerd).map(c=>c.tag));}
+function switchHerd(h){
+  currentHerd=h;localStorage.setItem('cb_herd',h);
+  document.querySelectorAll('.hp').forEach(b=>b.classList.remove('active'));
+  document.getElementById('hp-'+h).classList.add('active');
+  filt='all';document.getElementById('si').value='';
+  const sc=document.getElementById('search-clear');if(sc)sc.style.display='none';
+  populateTaglist();rh();
+}
+async function seedBlue(){
+  const ts=Date.now();
+  const newCows=TAGS_BLUE.map((t,i)=>({id:'bl'+i+'x'+ts,tag:t,herd:'Blue',added_year:2025,notes:null}));
+  await db('cows','POST',newCows);
+  const[dc]=await Promise.all([db('cows?select=*&order=tag')]);
+  cows=dc.map(c=>({...c,tag:String(c.tag)}));
+}
 function sv(name,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
@@ -356,8 +382,9 @@ function clearSearch(){const si=document.getElementById('si');si.value='';docume
 function rh(){
   const q=document.getElementById('si').value.trim().toLowerCase();
   const sc=document.getElementById('search-clear');if(sc)sc.style.display=q?'flex':'none';
-  let fl=cows.filter(c=>{if(q&&!c.tag.toLowerCase().includes(q))return false;if(filt==='calved')return cy(c.tag);if(filt==='waiting')return!cy(c.tag);if(filt==='concern')return hc(c.tag);return true;});
-  const c25=cows.filter(c=>cy(c.tag)).length,tot=cows.length,pct=tot?Math.round(c25/tot*100):0;
+  const hCows=cows.filter(c=>c.herd===currentHerd);
+  let fl=hCows.filter(c=>{if(q&&!dt(c.tag).toLowerCase().includes(q))return false;if(filt==='calved')return cy(c.tag);if(filt==='waiting')return!cy(c.tag);if(filt==='concern')return hc(c.tag);return true;});
+  const c25=hCows.filter(c=>cy(c.tag)).length,tot=hCows.length,pct=tot?Math.round(c25/tot*100):0;
   document.getElementById('hs-t').textContent=tot;
   document.getElementById('hs-c').textContent=c25;
   document.getElementById('hs-p').textContent=pct+'%';
@@ -368,12 +395,14 @@ function rh(){
     const calved=cy(cow.tag),concern=hc(cow.tag),ev25=events.find(e=>e.cowTag===cow.tag&&e.year===2025),latest=ec(cow.tag)[0];
     const yrs=[2022,2023,2024,2025].map(y=>{const e=events.find(ev=>ev.cowTag===cow.tag&&ev.year===y);if(!e)return'<span class="yd"></span>';if(e.outcome==='Died'||e.sex==='Died')return'<span class="yd d"></span>';return'<span class="yd c"></span>';}).join('');
     const meta=calved?(fd(ev25?.date)||'2025')+' &middot; '+sl(ev25?.sex):(latest?'Last: '+latest.year+' &middot; '+sl(latest.sex):'No calving history');
-    return'<div class="cow-card '+(concern?'concern':calved?'hh':'nc')+'" onclick="showCow(\''+cow.tag+'\')"><div class="cow-av '+(calved?'':'nv')+'">'+(calved?'&#128004;':'&#9724;')+'</div><div class="cow-info"><div class="cow-tag-label">'+cow.tag+'</div><div class="cow-meta">'+meta+'</div></div><div class="cow-right"><div class="cow-years">'+yrs+'</div><div class="cow-chev">&#8250;</div></div></div>';
+    return'<div class="cow-card '+(concern?'concern':calved?'hh':'nc')+'" onclick="showCow(\''+cow.tag+'\')"><div class="cow-av '+(calved?'':'nv')+'">'+(calved?'&#128004;':'&#9724;')+'</div><div class="cow-info"><div class="cow-tag-label">'+dt(cow.tag)+'</div><div class="cow-meta">'+meta+'</div></div><div class="cow-right"><div class="cow-years">'+yrs+'</div><div class="cow-chev">&#8250;</div></div></div>';
   }).join('');
 }
 function rcd(tag){
   const evts=ec(tag),tc=evts.filter(e=>e.sex&&e.sex!=='Died').length,lv=evts.filter(e=>e.outcome==='Alive').length;
-  document.getElementById('cdh').innerHTML='<button class="back-btn" onclick="sv(\'herd\',document.querySelector(\'.nav-tab\'))">&#8249; Back to Herd</button><div class="detail-tag">Cow '+tag+'</div><div><span class="detail-badge">&#129145; Pink Herd</span>'+(hc(tag)?' <span class="detail-badge" style="background:var(--red)">&#9888; Flagged</span>':'')+'</div><div class="detail-lifetime"><div><div class="ls-num">'+evts.length+'</div><div class="ls-lbl">Seasons</div></div><div><div class="ls-num">'+tc+'</div><div class="ls-lbl">Calves</div></div><div><div class="ls-num">'+lv+'</div><div class="ls-lbl">Survived</div></div></div>';
+  const hBadgeStyle=currentHerd==='Blue'?'background:#3A6B8A':'';
+  const hBadgeLabel=currentHerd==='Blue'?'Blue Herd':'Pink Herd';
+  document.getElementById('cdh').innerHTML='<button class="back-btn" onclick="sv(\'herd\',document.querySelector(\'.nav-tab\'))">&#8249; Back to Herd</button><div class="detail-tag">Cow '+dt(tag)+'</div><div><span class="detail-badge" style="'+hBadgeStyle+'">&#129145; '+hBadgeLabel+'</span>'+(hc(tag)?' <span class="detail-badge" style="background:var(--red)">&#9888; Flagged</span>':'')+'</div><div class="detail-lifetime"><div><div class="ls-num">'+evts.length+'</div><div class="ls-lbl">Seasons</div></div><div><div class="ls-num">'+tc+'</div><div class="ls-lbl">Calves</div></div><div><div class="ls-num">'+lv+'</div><div class="ls-lbl">Survived</div></div></div>';
   let html='<div class="tl-title">Calving History</div>';
   [2025,2024,2023,2022].forEach(yr=>{
     const e=events.find(ev=>ev.cowTag===tag&&ev.year===yr);
@@ -383,33 +412,36 @@ function rcd(tag){
     const editBtn=e?'<button class="tl-edit" onclick="openEditSheet(\''+e.id+'\',\''+tag+'\')">&#9998;</button>':'';
     html+='<div class="tl-item"><div class="tl-dot '+(!e?'noc':died?'die':'cal')+'">'+(!e?'&#9675;':died?'&#10013;':se(e?.sex))+'</div><div class="tl-body '+(died?'de':'')+'">'+delBtn+editBtn+'<div class="tl-yr">'+yr+(yr===2025?' &middot; Current Season':'')+'</div><div class="tl-calf">'+(!e?'No record yet':died?'Calf Lost':sl(e.sex)+' Calf')+'</div>'+(!e&&yr===2025?'<div class="tl-detail">Waiting to calve</div>':e?.date?'<div class="tl-detail">'+fd(e.date)+'</div>':'')+(e?.notes?'<div class="tl-note">&ldquo;'+e.notes+'&rdquo;</div>':'')+'</div></div>';
   });
-  if(!events.find(e=>e.cowTag===tag&&e.year===2025))html+='<button class="add-yr-btn" onclick="prefill(\''+tag+'\')">+ Record 2025 calf for Cow '+tag+'</button>';
-  html+='<button class="remove-cow-btn" onclick="removeCow(\''+tag+'\',this)">Remove Cow '+tag+' from Herd</button>';
+  if(!events.find(e=>e.cowTag===tag&&e.year===2025))html+='<button class="add-yr-btn" onclick="prefill(\''+tag+'\')">+ Record 2025 calf for Cow '+dt(tag)+'</button>';
+  html+='<button class="remove-cow-btn" onclick="removeCow(\''+tag+'\',this)">Remove Cow '+dt(tag)+' from Herd</button>';
   document.getElementById('ctl').innerHTML=html;
 }
-function prefill(tag){document.getElementById('f-tag').value=tag;sv('add',document.querySelector('.nav-tab:nth-child(3)'));}
+function prefill(tag){document.getElementById('f-tag').value=dt(tag);sv('add',document.querySelector('.nav-tab:nth-child(3)'));}
 function rs(){
   let html='';
+  const ht=herdTags();
+  const hCows=cows.filter(c=>c.herd===currentHerd);
   [2025,2024,2023,2022].forEach(yr=>{
-    const ye=events.filter(e=>e.year===yr);if(!ye.length&&yr!==2025)return;
-    const cal=ye.filter(e=>e.date).length,bu=ye.filter(e=>e.sex==='B').length,he=ye.filter(e=>e.sex==='H').length,tw=ye.filter(e=>e.sex==='Twins').length,di=ye.filter(e=>e.outcome==='Died'||e.sex==='Died').length,pct=cows.length?Math.round(cal/cows.length*100):0;
+    const ye=events.filter(e=>e.year===yr&&ht.has(e.cowTag));if(!ye.length&&yr!==2025)return;
+    const cal=ye.filter(e=>e.date).length,bu=ye.filter(e=>e.sex==='B').length,he=ye.filter(e=>e.sex==='H').length,tw=ye.filter(e=>e.sex==='Twins').length,di=ye.filter(e=>e.outcome==='Died'||e.sex==='Died').length,pct=hCows.length?Math.round(cal/hCows.length*100):0;
     html+='<div class="season-card"><div class="sy"><span class="sy-num">'+yr+' Season</span><span class="sy-tot">'+cal+' calved</span></div><div class="ss"><div class="ss-box bu"><div class="ss-n">'+bu+'</div><div class="ss-l">Bulls</div></div><div class="ss-box he"><div class="ss-n">'+he+'</div><div class="ss-l">Heifers</div></div><div class="ss-box tw"><div class="ss-n">'+tw+'</div><div class="ss-l">Twins</div></div><div class="ss-box di"><div class="ss-n">'+(di||'&mdash;')+'</div><div class="ss-l">Lost</div></div></div>'+(yr===2025?'<div class="pb-wrap"><div class="pb-lbl"><span>Season Progress</span><span>'+pct+'%</span></div><div class="pb-track"><div class="pb-fill" style="width:'+pct+'%"></div></div></div>':'')+'</div>';
   });
   document.getElementById('sc2').innerHTML=html||'<div class="empty"><div class="ei">&#128197;</div><p>No season data yet.</p></div>';
 }
 function ss(s){selSex=s;['b','h','t','d'].forEach(id=>document.getElementById('bt-'+id).className='bt');const m={B:'b',H:'h',Twins:'t',Died:'d'};if(m[s])document.getElementById('bt-'+m[s]).classList.add('s'+m[s]);}
 async function submitCalf(){
-  const tag=document.getElementById('f-tag').value.trim(),date=document.getElementById('f-date').value,notes=document.getElementById('f-notes').value.trim();
-  if(!tag){document.getElementById('f-tag').style.borderColor='var(--red)';setTimeout(()=>document.getElementById('f-tag').style.borderColor='',1500);toast('Enter a cow tag number',true);return;}
+  const rawTag=document.getElementById('f-tag').value.trim(),date=document.getElementById('f-date').value,notes=document.getElementById('f-notes').value.trim();
+  if(!rawTag){document.getElementById('f-tag').style.borderColor='var(--red)';setTimeout(()=>document.getElementById('f-tag').style.borderColor='',1500);toast('Enter a cow tag number',true);return;}
   if(!selSex){toast('Choose bull, heifer, twins, or lost',true);return;}
-  if(events.find(e=>e.cowTag===tag&&e.year===2025)){toast('Cow '+tag+' already has a 2025 record \u2014 open her card to edit it',true);return;}
+  const tag=currentHerd==='Blue'?'b'+rawTag:rawTag;
+  if(events.find(e=>e.cowTag===tag&&e.year===2025)){toast('Cow '+rawTag+' already has a 2025 record \u2014 open her card to edit it',true);return;}
   const btn=document.getElementById('sub-btn');btn.disabled=true;btn.textContent='Saving\u2026';
   try{
-    if(!cows.find(c=>c.tag===tag)){const nc={id:'c'+Date.now(),tag,herd:'Pink',added_year:2025,notes:null};await db('cows','POST',[nc]);cows.push(nc);}
+    if(!cows.find(c=>c.tag===tag)){const nc={id:'c'+Date.now(),tag,herd:currentHerd,added_year:2025,notes:null};await db('cows','POST',[nc]);cows.push(nc);}
     const ev={id:'e'+Date.now(),cow_tag:tag,year:2025,sex:selSex,date:date||null,notes:notes||null,outcome:selSex==='Died'?'Died':(selSex?'Alive':null)};
     await db('events','POST',[ev]);events.push({...ev,cowTag:tag});sync('ok');
     document.getElementById('f-tag').value='';document.getElementById('f-notes').value='';selSex=null;['b','h','t','d'].forEach(id=>document.getElementById('bt-'+id).className='bt');
-    toast('\u2713 Saved \u2014 Cow '+tag);setTimeout(()=>sv('herd',document.querySelector('.nav-tab')),800);
+    toast('\u2713 Saved \u2014 Cow '+rawTag);setTimeout(()=>sv('herd',document.querySelector('.nav-tab')),800);
   }catch(e){sync('error');toast('Save failed \u2014 check connection',true);}
   btn.disabled=false;btn.textContent='Save Calf \u2192';
 }
@@ -417,10 +449,11 @@ function openSheet(){document.getElementById('add-sheet').classList.add('open');
 function closeSheet(){document.getElementById('add-sheet').classList.remove('open');}
 function maybeClose(e){if(e.target===e.currentTarget)closeSheet();}
 async function addCow(){
-  const tag=document.getElementById('new-tag').value.trim();
-  if(!tag){toast('Enter a tag number',true);return;}
-  if(cows.find(c=>c.tag===tag)){toast('Cow '+tag+' already in herd',true);return;}
-  try{const c={id:'c'+Date.now(),tag,herd:'Pink',added_year:2025,notes:document.getElementById('new-notes').value.trim()||null};await db('cows','POST',[c]);cows.push(c);document.getElementById('new-tag').value='';document.getElementById('new-notes').value='';closeSheet();toast('Cow '+tag+' added');rh();}catch(e){toast('Could not add cow',true);}
+  const rawTag=document.getElementById('new-tag').value.trim();
+  if(!rawTag){toast('Enter a tag number',true);return;}
+  const tag=currentHerd==='Blue'?'b'+rawTag:rawTag;
+  if(cows.find(c=>c.tag===tag)){toast('Cow '+rawTag+' already in herd',true);return;}
+  try{const c={id:'c'+Date.now(),tag,herd:currentHerd,added_year:2025,notes:document.getElementById('new-notes').value.trim()||null};await db('cows','POST',[c]);cows.push(c);document.getElementById('new-tag').value='';document.getElementById('new-notes').value='';closeSheet();toast('Cow '+rawTag+' added');rh();}catch(e){toast('Could not add cow',true);}
 }
 let pendingDel=null,pendingDelTimer=null;
 async function delEvent(id,tag,btn){
@@ -452,7 +485,7 @@ async function removeCow(tag,btn){
   if(btn){btn.textContent='Tap again to confirm removal';btn.classList.add('armed');}
   pendingRemoveTimer=setTimeout(()=>{pendingRemove=null;rcd(tag);},4000);
 }
-function populateTaglist(){const dl=document.getElementById('cow-tags');if(dl)dl.innerHTML=cows.map(c=>'<option value="'+c.tag+'">').join('');}
+function populateTaglist(){const dl=document.getElementById('cow-tags');if(dl)dl.innerHTML=cows.filter(c=>c.herd===currentHerd).map(c=>'<option value="'+dt(c.tag)+'">').join('');}
 let editEvt=null,editSex=null;
 function openEditSheet(id,tag){
   editEvt=events.find(e=>e.id===id);if(!editEvt)return;
